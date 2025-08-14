@@ -1,202 +1,138 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Neon Mandelbrot (Simple, Loads on Page Open)</title>
-  <style>
-    :root { color-scheme: dark; }
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: #0b0b0f;
-      color: #e8e8ff;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    }
-    header {
-      text-align: center;
-      padding: 12px 8px;
-      font-weight: 700;
-      letter-spacing: .06em;
-    }
-    #wrap {
-      display: grid;
-      place-items: center;
-      height: calc(100% - 56px);
-    }
-    canvas {
-      background: black;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.6), 0 0 40px rgba(128,0,255,.25) inset;
-      max-width: 95vw;
-      max-height: calc(95vh - 56px);
-    }
-    .hint {
-      position: fixed;
-      left: 12px; bottom: 10px;
-      opacity: .7; font-size: 12px;
-    }
-  </style>
+    <title>Mandelbrot Diagnostic</title>
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            color: white;
+            font-family: monospace;
+        }
+        #diagnostics {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 1px solid red;
+            z-index: 100;
+        }
+        canvas {
+            display: block;
+            border: 2px solid lime;
+        }
+    </style>
 </head>
 <body>
-  <header>NEON MANDELBROT — static render (no animation)</header>
-  <div id="wrap">
-    <canvas id="fractalCanvas" width="1280" height="800"></canvas>
-  </div>
-  <div class="hint">If you see a blank page, open DevTools → Console to check for errors.</div>
+    <div id="diagnostics">Running tests...</div>
+    <canvas id="testCanvas"></canvas>
 
-  <script>
-    'use strict';
-
-    // ====== Color palettes that return integer [r,g,b] ======
-    const palettes = {
-      magma(t) {
-        const r = Math.min(255, 250 + Math.sin(t * 10) * 5);
-        const g = Math.min(255, 100 + Math.sin(t * 15) * 30);
-        const b = Math.min(255, 120 + Math.sin(t * 20) * 40);
-        return [r|0, g|0, b|0];
-      },
-      plasma(t) {
-        const r = Math.min(255, 200 + Math.sin(t * 15) * 55);
-        const g = Math.min(255,  50 + Math.sin(t * 10) * 50);
-        const b = Math.min(255, 150 + Math.sin(t * 20) * 105);
-        return [r|0, g|0, b|0];
-      },
-      inferno(t) {
-        const r = Math.min(255, 220 + Math.sin(t * 12) * 35);
-        const g = Math.min(255, 100 + Math.sin(t * 18) * 50);
-        const b = Math.min(255,  30 + Math.sin(t * 25) * 30);
-        return [r|0, g|0, b|0];
-      },
-      viridis(t) {
-        const r = Math.min(255,  50 + Math.sin(t * 15) * 50);
-        const g = Math.min(255, 150 + Math.sin(t * 20) * 50);
-        const b = Math.min(255, 180 + Math.sin(t * 25) * 50);
-        return [r|0, g|0, b|0];
-      },
-      rainbow(t) {
-        const r = Math.sin(t * 6.28318530718) * 127 + 128;
-        const g = Math.sin(t * 6.28318530718 + 2) * 127 + 128;
-        const b = Math.sin(t * 6.28318530718 + 4) * 127 + 128;
-        return [r|0, g|0, b|0];
-      },
-      // Fixed syntax: all parentheses present
-      electric(t) {
-        const r = Math.abs(Math.sin(t * 6.0)) * 255;
-        const g = Math.abs(Math.sin(t * 6.0 + Math.PI/3)) * 255;
-        const b = Math.abs(Math.sin(t * 6.0 + 2*Math.PI/3)) * 255;
-        return [r|0, g|0, b|0];
-      }
-    };
-
-    // ====== Canvas sizing (crisp on HiDPI) ======
-    const canvas = document.getElementById('fractalCanvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-    function fitCanvasToScreen() {
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const maxCSSWidth = Math.min(1280, Math.floor(window.innerWidth * 0.95));
-      const maxCSSHeight = Math.min(800, Math.floor((window.innerHeight - 56) * 0.95));
-
-      // Keep ~16:10 aspect like the original
-      const targetAspect = 16 / 10;
-      let cssW = maxCSSWidth, cssH = Math.floor(cssW / targetAspect);
-      if (cssH > maxCSSHeight) {
-        cssH = maxCSSHeight;
-        cssW = Math.floor(cssH * targetAspect);
-      }
-
-      canvas.style.width = cssW + 'px';
-      canvas.style.height = cssH + 'px';
-      canvas.width = Math.floor(cssW * dpr);
-      canvas.height = Math.floor(cssH * dpr);
-    }
-
-    // ====== Mandelbrot core ======
-    function drawMandelbrot({
-      palette = 'electric',
-      maxIter = 250,
-      centerX = -0.75,
-      centerY = 0.0,
-      viewWidth = 3.5 // horizontal width in complex plane
-    } = {}) {
-      const width = canvas.width;
-      const height = canvas.height;
-
-      // Maintain aspect ratio vertically
-      const aspect = height / width;
-      const halfW = viewWidth / 2;
-      const halfH = halfW * aspect;
-      const xmin = centerX - halfW;
-      const xmax = centerX + halfW;
-      const ymin = centerY - halfH;
-      const ymax = centerY + halfH;
-
-      const img = ctx.createImageData(width, height);
-      const data = img.data;
-      const getColor = palettes[palette] || palettes.electric;
-
-      for (let py = 0; py < height; py++) {
-        const cy = ymin + (ymax - ymin) * (py / (height - 1));
-        for (let px = 0; px < width; px++) {
-          const cx = xmin + (xmax - xmin) * (px / (width - 1));
-
-          // Iterate z <- z^2 + c
-          let x = 0, y = 0, iter = 0;
-          let x2 = 0, y2 = 0;
-          while ((x2 + y2) <= 4 && iter < maxIter) {
-            y = 2 * x * y + cy;
-            x = x2 - y2 + cx;
-            x2 = x * x;
-            y2 = y * y;
-            iter++;
-          }
-
-          const idx = (py * width + px) * 4;
-          if (iter === maxIter) {
-            // Inside set: black
-            data[idx] = data[idx+1] = data[idx+2] = 0;
-          } else {
-            // Smooth coloring (prettier gradients)
-            const log_zn = Math.log(x2 + y2) / 2;
-            const nu = Math.log(log_zn / Math.log(2)) / Math.log(2);
-            let t = (iter + 1 - nu) / maxIter;
-            if (!isFinite(t) || t < 0) t = 0;
-            if (t > 1) t = 1;
-
-            const [r, g, b] = getColor(t);
-            data[idx]   = r;
-            data[idx+1] = g;
-            data[idx+2] = b;
-          }
-          data[idx+3] = 255; // alpha
+    <script>
+        // ===== TEST 1: Canvas Setup =====
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        const diagnostics = document.getElementById('diagnostics');
+        
+        let testResults = [];
+        
+        function logTest(name, passed) {
+            testResults.push(`${passed ? '✅' : '❌'} ${name}`);
+            diagnostics.innerHTML = testResults.join('<br>');
         }
-      }
 
-      ctx.putImageData(img, 0, 0);
-    }
+        // Test 1.1: Canvas element exists
+        if (!canvas) {
+            logTest('Canvas element exists', false);
+            throw new Error("Canvas element not found!");
+        } else {
+            logTest('Canvas element exists', true);
+        }
 
-    // ====== Boot ======
-    function render() {
-      fitCanvasToScreen();
-      drawMandelbrot({
-        palette: 'electric', // try: 'magma','plasma','inferno','viridis','rainbow','electric'
-        maxIter: 300
-      });
-    }
+        // Test 1.2: Canvas context available
+        if (!ctx) {
+            logTest('2D context available', false);
+            throw new Error("Canvas 2D context not supported!");
+        } else {
+            logTest('2D context available', true);
+        }
 
-    window.addEventListener('resize', () => {
-      // simple debounce
-      clearTimeout(window.__resizeTimer);
-      window.__resizeTimer = setTimeout(render, 120);
-    });
+        // ===== TEST 2: Canvas Rendering =====
+        canvas.width = 300;
+        canvas.height = 200;
+        
+        // Test 2.1: Basic drawing
+        ctx.fillStyle = 'rgb(255, 0, 0)';
+        ctx.fillRect(10, 10, 50, 50);
+        logTest('Basic rectangle drawing', true);
 
-    // Draw on first load
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', render);
-    } else {
-      render();
-    }
-  </script>
+        // ===== TEST 3: Mandelbrot Math =====
+        function testMandelbrotMath() {
+            try {
+                // Test point inside the set (should return max iterations)
+                const inside = mandelbrot({x:0,y:0}, 100);
+                // Test point outside the set (should return < max iterations)
+                const outside = mandelbrot({x:1,y:1}, 100);
+                
+                return inside === 100 && outside < 100;
+            } catch (e) {
+                console.error("Math test failed:", e);
+                return false;
+            }
+        }
+
+        function mandelbrot(c, maxIter) {
+            let z = { x: 0, y: 0 };
+            let iter = 0;
+            while (z.x * z.x + z.y * z.y <= 4 && iter < maxIter) {
+                const tmp = z.x * z.x - z.y * z.y + c.x;
+                z.y = 2 * z.x * z.y + c.y;
+                z.x = tmp;
+                iter++;
+            }
+            return iter;
+        }
+        
+        logTest('Mandelbrot math works', testMandelbrotMath());
+
+        // ===== TEST 4: Full Render =====
+        function drawMandelbrot() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+            
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    const cx = -2 + 3 * x / width;
+                    const cy = -1.1 + 2.2 * y / height;
+                    
+                    const iter = mandelbrot({x: cx, y: cy}, 100);
+                    const idx = (y * width + x) * 4;
+                    const color = iter === 100 ? 0 : 255;
+                    
+                    data[idx] = color;     // R
+                    data[idx+1] = color;   // G
+                    data[idx+2] = color;   // B
+                    data[idx+3] = 255;    // Alpha
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        try {
+            drawMandelbrot();
+            logTest('Full render completed', true);
+        } catch (e) {
+            console.error("Render failed:", e);
+            logTest('Full render completed', false);
+        }
+
+        // Final check
+        setTimeout(() => {
+            const pixels = ctx.getImageData(0, 0, 1, 1).data;
+            logTest('Canvas has drawn pixels', pixels[0] !== 0 || pixels[1] !== 0 || pixels[2] !== 0);
+        }, 100);
+    </script>
 </body>
 </html>
