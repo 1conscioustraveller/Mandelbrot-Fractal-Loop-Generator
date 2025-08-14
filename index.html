@@ -1,65 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Ohm's Law Interactive Circuit</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.7.1/core.css">
-    <script type="module" src="https://pyscript.net/releases/2024.7.1/core.js"></script>
+  <meta charset="UTF-8" />
+  <title>Ohm's Law Interactive Circuit</title>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PyScript (2024 API) -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2024.7.1/core.css" />
+  <script type="module" src="https://pyscript.net/releases/2024.7.1/core.js"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col items-center justify-center p-6">
 
-    <h1 class="text-3xl font-bold mb-6 text-cyan-400">⚡ Ohm's Law Visualizer ⚡</h1>
+  <h1 class="text-3xl font-bold mb-6 text-cyan-400">⚡ Ohm's Law Visualizer ⚡</h1>
 
-    <!-- Mode selector -->
-    <div class="mb-6">
-        <label for="mode-select" class="block mb-2 text-lg">Solve for:</label>
-        <select id="mode-select" class="bg-gray-800 text-white rounded px-4 py-2">
-            <option>Solve I</option>
-            <option>Solve V</option>
-            <option>Solve R</option>
-        </select>
+  <!-- Controls -->
+  <div class="mb-6 w-full max-w-md space-y-4">
+    <div>
+      <label for="mode-select" class="block mb-2 text-lg">Solve for:</label>
+      <select id="mode-select" class="bg-gray-800 text-white rounded px-4 py-2 w-full">
+        <option>Solve I</option>
+        <option>Solve V</option>
+        <option>Solve R</option>
+      </select>
     </div>
 
-    <!-- Sliders -->
-    <div class="space-y-6 w-full max-w-md">
-        <div>
-            <label for="slider-V" class="block mb-1">Voltage (V)</label>
-            <input id="slider-V" type="range" min="0" max="20" step="0.1" value="9"
-                class="w-full accent-cyan-400">
-        </div>
-        <div>
-            <label for="slider-I" class="block mb-1">Current (A)</label>
-            <input id="slider-I" type="range" min="0" max="5" step="0.01" value="0.09"
-                class="w-full accent-green-400">
-        </div>
-        <div>
-            <label for="slider-R" class="block mb-1">Resistance (Ω)</label>
-            <input id="slider-R" type="range" min="1" max="500" step="1" value="100"
-                class="w-full accent-yellow-400">
-        </div>
+    <div>
+      <label for="slider-V" class="block mb-1">Voltage (V)</label>
+      <input id="slider-V" type="range" min="0" max="24" step="0.1" value="9" class="w-full accent-cyan-400" />
     </div>
 
-    <!-- Circuit display -->
-    <div class="mt-8 bg-gray-800 p-4 rounded-lg shadow-lg">
-        <img id="circuit-img" class="mx-auto" />
+    <div>
+      <label for="slider-I" class="block mb-1">Current (A)</label>
+      <input id="slider-I" type="range" min="0" max="2" step="0.01" value="0.09" class="w-full accent-green-400" />
     </div>
 
-    <py-config>
-        packages = ["matplotlib"]
-    </py-config>
+    <div>
+      <label for="slider-R" class="block mb-1">Resistance (Ω)</label>
+      <input id="slider-R" type="range" min="1" max="1000" step="1" value="100" class="w-full accent-yellow-400" />
+    </div>
+  </div>
 
-    <py-script>
+  <!-- Circuit display -->
+  <div class="mt-2 bg-gray-800 p-4 rounded-lg shadow-lg text-center">
+    <img id="circuit-img" class="mx-auto mb-3" />
+    <div id="power-display" class="text-lg font-semibold text-pink-400"></div>
+  </div>
+
+  <!-- PyScript config -->
+  <py-config>
+    packages = ["matplotlib"]
+  </py-config>
+
+  <!-- PyScript logic -->
+  <py-script>
 from js import document
-import matplotlib.pyplot as plt
 import io, base64, math
+import matplotlib.pyplot as plt
 
+# Persistent figure & axes
+fig, ax = plt.subplots(figsize=(6, 4))
+fig.patch.set_facecolor("black")
+ax.set_facecolor("black")
+
+# Globals
 mode = "Solve I"
 V = 9.0
 I = 0.09
 R = 100.0
 
-# Helper DOM functions
 def get_value(id):
     return float(document.getElementById(id).value)
 
@@ -69,10 +77,12 @@ def get_select_value(id):
 def set_image(id, data_url):
     document.getElementById(id).src = data_url
 
-# Drawing helpers
+def set_text(id, text):
+    document.getElementById(id).innerText = text
+
 def draw_battery(ax, x, y, height, spacing):
-    ax.plot([x - spacing/2, x - spacing/2], [y - height, y + height])
-    ax.plot([x + spacing/2, x + spacing/2], [y - height/2, y + height/2])
+    ax.plot([x - spacing/2, x - spacing/2], [y - height, y + height], color="white")
+    ax.plot([x + spacing/2, x + spacing/2], [y - height/2, y + height/2], color="white")
 
 def draw_resistor(ax, x1, y1, x2, y2, zigzags=6, amplitude=0.25):
     dx = x2 - x1
@@ -86,16 +96,16 @@ def draw_resistor(ax, x1, y1, x2, y2, zigzags=6, amplitude=0.25):
     segment = length / (zigzags * 2)
     for i in range(1, zigzags * 2):
         t = i * segment
-        base_x = x1 + ux * t
-        base_y = y1 + uy * t
+        bx = x1 + ux * t
+        by = y1 + uy * t
         offset = amplitude if i % 2 == 1 else -amplitude
-        pts.append((base_x + px * offset, base_y + py * offset))
+        pts.append((bx + px * offset, by + py * offset))
     pts.append((x2, y2))
     xs, ys = zip(*pts)
-    ax.plot(xs, ys)
+    ax.plot(xs, ys, color="white")
 
 def format_val(val, unit):
-    if val is None or isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+    if val is None or (isinstance(val, float) and (math.isnan(val) or math.isinf(val))):
         return "—"
     if abs(val) >= 100:
         s = f"{val:.0f}"
@@ -105,7 +115,50 @@ def format_val(val, unit):
         s = f"{val:.2f}"
     return f"{s} {unit}"
 
-# Main plot updater
+def render():
+    left, right, top, bottom = -4, 4, 1.5, -1.5
+    ax.cla()
+    ax.set_facecolor("black")
+
+    # Wires
+    ax.plot([left, right], [top, top], color="white")
+    ax.plot([right, right], [top, bottom], color="white")
+    ax.plot([left, right], [bottom, bottom], color="white")
+    ax.plot([left, left], [bottom, top], color="white")
+
+    # Elements
+    draw_battery(ax, left, 0.0, height=0.8, spacing=0.6)
+    draw_resistor(ax, 0.0, 0.0, right, 0.0)
+
+    lw = 1.0 + 4.0 * (0.0 if math.isnan(I) else min(1.0, abs(I)/2.0))
+    ax.annotate("", xy=(right - 0.5, top), xytext=(left + 0.5, top),
+                arrowprops=dict(arrowstyle="->", linewidth=lw, color="cyan"))
+
+    ax.text(0.0, top + 0.3, f"I = {format_val(I, 'A')}", ha="center", va="bottom", color="cyan")
+    ax.text(left - 0.2, 0.0, f"V = {format_val(V, 'V')}", ha="right", va="center", rotation=90, color="green")
+    ax.text(right + 0.2, 0.0, f"R = {format_val(R, 'Ω')}", ha="left", va="center", color="yellow")
+
+    eq = r"$I = \dfrac{V}{R}$" if mode == "Solve I" else (r"$V = I \cdot R$" if mode == "Solve V" else r"$R = \dfrac{V}{I}$")
+    ax.text(0.0, bottom - 0.4, eq, ha="center", va="top", color="white")
+
+    ax.set_aspect("equal")
+    ax.set_xlim(left - 1.5, right + 1.5)
+    ax.set_ylim(bottom - 1.0, top + 1.0)
+    ax.axis("off")
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", facecolor="black")
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
+    set_image("circuit-img", f"data:image/png;base64,{img_base64}")
+
+    # Power display
+    if not (math.isnan(V) or math.isnan(I)):
+        power = V * I
+        set_text("power-display", f"Power: {format_val(power, 'W')}")
+    else:
+        set_text("power-display", "Power: —")
+
 def update_plot(event=None):
     global mode, V, I, R
     mode = get_select_value("mode-select")
@@ -120,45 +173,7 @@ def update_plot(event=None):
     elif mode == "Solve R":
         R = float('nan') if I <= 0 else V / I
 
-    fig, ax = plt.subplots(figsize=(6,4))
-    left, right, top, bottom = -4, 4, 1.5, -1.5
-    ax.plot([left, right], [top, top], color="white")
-    ax.plot([right, right], [top, bottom], color="white")
-    ax.plot([left, right], [bottom, bottom], color="white")
-    ax.plot([left, left], [bottom, top], color="white")
-
-    draw_battery(ax, left, 0.0, height=0.8, spacing=0.6)
-    draw_resistor(ax, 0.0, 0.0, right, 0.0)
-
-    lw = 1.0 + 4.0 * (0.0 if math.isnan(I) else min(1.0, abs(I)/2.0))
-    ax.annotate("", xy=(right - 0.5, top), xytext=(left + 0.5, top),
-                arrowprops=dict(arrowstyle="->", linewidth=lw, color="cyan"))
-
-    ax.text(0.0, top + 0.3, f"I = {format_val(I, 'A')}", ha="center", va="bottom", color="cyan")
-    ax.text(left - 0.2, 0.0, f"V = {format_val(V, 'V')}", ha="right", va="center", rotation=90, color="green")
-    ax.text(right + 0.2, 0.0, f"R = {format_val(R, 'Ω')}", ha="left", va="center", color="yellow")
-
-    if mode == "Solve I":
-        eq = r"$I = \dfrac{V}{R}$"
-    elif mode == "Solve V":
-        eq = r"$V = I \cdot R$"
-    else:
-        eq = r"$R = \dfrac{V}{I}$"
-    ax.text(0.0, bottom - 0.4, eq, ha="center", va="top", color="white")
-
-    ax.set_aspect("equal")
-    ax.set_xlim(left - 1.5, right + 1.5)
-    ax.set_ylim(bottom - 1.0, top + 1.0)
-    ax.axis("off")
-    fig.patch.set_facecolor("black")
-    ax.set_facecolor("black")
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight", facecolor="black")
-    plt.close(fig)
-    buf.seek(0)
-    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
-    set_image("circuit-img", f"data:image/png;base64,{img_base64}")
+    render()
 
 # Bind events
 document.getElementById("slider-V").oninput = update_plot
@@ -166,8 +181,9 @@ document.getElementById("slider-I").oninput = update_plot
 document.getElementById("slider-R").oninput = update_plot
 document.getElementById("mode-select").onchange = update_plot
 
-update_plot()
-    </py-script>
+# Initial render
+render()
+  </py-script>
 
 </body>
 </html>
