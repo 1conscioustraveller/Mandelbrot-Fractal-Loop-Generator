@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col items-center justify-center p-6">
 
-    <h1 class="text-3xl font-bold mb-4 text-cyan-400">⚡ Ohm's Law Visualizer ⚡</h1>
+    <h1 class="text-3xl font-bold mb-6 text-cyan-400">⚡ Ohm's Law Visualizer ⚡</h1>
 
     <!-- Mode selector -->
     <div class="mb-6">
@@ -45,13 +45,12 @@
         <img id="circuit-img" class="mx-auto" />
     </div>
 
-    <!-- PyScript logic -->
     <py-config>
         packages = ["matplotlib"]
     </py-config>
 
     <py-script>
-from pyscript import Element
+from js import document
 import matplotlib.pyplot as plt
 import io, base64, math
 
@@ -60,6 +59,17 @@ V = 9.0
 I = 0.09
 R = 100.0
 
+# Helper DOM functions
+def get_value(id):
+    return float(document.getElementById(id).value)
+
+def get_select_value(id):
+    return document.getElementById(id).value
+
+def set_image(id, data_url):
+    document.getElementById(id).src = data_url
+
+# Drawing helpers
 def draw_battery(ax, x, y, height, spacing):
     ax.plot([x - spacing/2, x - spacing/2], [y - height, y + height])
     ax.plot([x + spacing/2, x + spacing/2], [y - height/2, y + height/2])
@@ -95,12 +105,13 @@ def format_val(val, unit):
         s = f"{val:.2f}"
     return f"{s} {unit}"
 
-def update_plot(*args):
+# Main plot updater
+def update_plot(event=None):
     global mode, V, I, R
-    mode = Element("mode-select").element.value
-    V = float(Element("slider-V").element.value)
-    I = float(Element("slider-I").element.value)
-    R = float(Element("slider-R").element.value)
+    mode = get_select_value("mode-select")
+    V = get_value("slider-V")
+    I = get_value("slider-I")
+    R = get_value("slider-R")
 
     if mode == "Solve I":
         I = float('nan') if R <= 0 else V / R
@@ -111,21 +122,21 @@ def update_plot(*args):
 
     fig, ax = plt.subplots(figsize=(6,4))
     left, right, top, bottom = -4, 4, 1.5, -1.5
-    ax.plot([left, right], [top, top])
-    ax.plot([right, right], [top, bottom])
-    ax.plot([left, right], [bottom, bottom])
-    ax.plot([left, left], [bottom, top])
+    ax.plot([left, right], [top, top], color="white")
+    ax.plot([right, right], [top, bottom], color="white")
+    ax.plot([left, right], [bottom, bottom], color="white")
+    ax.plot([left, left], [bottom, top], color="white")
 
     draw_battery(ax, left, 0.0, height=0.8, spacing=0.6)
     draw_resistor(ax, 0.0, 0.0, right, 0.0)
 
     lw = 1.0 + 4.0 * (0.0 if math.isnan(I) else min(1.0, abs(I)/2.0))
     ax.annotate("", xy=(right - 0.5, top), xytext=(left + 0.5, top),
-                arrowprops=dict(arrowstyle="->", linewidth=lw))
+                arrowprops=dict(arrowstyle="->", linewidth=lw, color="cyan"))
 
-    ax.text(0.0, top + 0.3, f"I = {format_val(I, 'A')}", ha="center", va="bottom", color="white")
-    ax.text(left - 0.2, 0.0, f"V = {format_val(V, 'V')}", ha="right", va="center", rotation=90, color="white")
-    ax.text(right + 0.2, 0.0, f"R = {format_val(R, 'Ω')}", ha="left", va="center", color="white")
+    ax.text(0.0, top + 0.3, f"I = {format_val(I, 'A')}", ha="center", va="bottom", color="cyan")
+    ax.text(left - 0.2, 0.0, f"V = {format_val(V, 'V')}", ha="right", va="center", rotation=90, color="green")
+    ax.text(right + 0.2, 0.0, f"R = {format_val(R, 'Ω')}", ha="left", va="center", color="yellow")
 
     if mode == "Solve I":
         eq = r"$I = \dfrac{V}{R}$"
@@ -147,12 +158,13 @@ def update_plot(*args):
     plt.close(fig)
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")
-    Element("circuit-img").element.src = f"data:image/png;base64,{img_base64}"
+    set_image("circuit-img", f"data:image/png;base64,{img_base64}")
 
-# Event bindings
-for slider_id in ["slider-V", "slider-I", "slider-R"]:
-    Element(slider_id).element.oninput = update_plot
-Element("mode-select").element.onchange = update_plot
+# Bind events
+document.getElementById("slider-V").oninput = update_plot
+document.getElementById("slider-I").oninput = update_plot
+document.getElementById("slider-R").oninput = update_plot
+document.getElementById("mode-select").onchange = update_plot
 
 update_plot()
     </py-script>
