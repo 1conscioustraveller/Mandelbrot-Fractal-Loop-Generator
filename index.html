@@ -2,348 +2,169 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ohm's Law Simulator</title>
+    <title>Ohm's Law Interactive Circuit</title>
+
+    <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        electric: {
-                            blue: '#00a8ff',
-                            purple: '#9c27b0',
-                            pink: '#e91e63',
-                        },
-                        dark: {
-                            primary: '#1a1a2e',
-                            secondary: '#16213e',
-                        }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    }
-                }
-            }
-        }
-    </script>
+
+    <!-- PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.7.1/core.css">
+    <script defer src="https://pyscript.net/releases/2024.7.1/core.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
         body {
-            font-family: 'Orbitron', sans-serif;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: white;
         }
-        .circuit-line {
-            stroke-dasharray: 10;
-            animation: dash 30s linear infinite;
-        }
-        @keyframes dash {
-            to {
-                stroke-dashoffset: 1000;
-            }
-        }
-        .glow {
-            filter: drop-shadow(0 0 8px currentColor);
-        }
-        .animate-change {
-            animation: pulse 0.5s ease-in-out;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
-<body class="bg-dark-primary text-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-electric-blue">
-                <span class="glow">OHM'S LAW SIMULATOR</span>
-            </h1>
-            <p class="text-xl text-electric-purple">V = I × R</p>
-        </header>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-        <main class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div class="bg-dark-secondary rounded-xl p-6 shadow-xl border border-gray-800">
-                <h2 class="text-2xl font-bold mb-6 text-electric-pink border-b border-gray-700 pb-2">Circuit Visualization</h2>
-                <div class="flex justify-center items-center">
-                    <svg width="400" height="300" viewBox="0 0 400 300" class="circuit-diagram">
-                        <!-- Battery -->
-                        <rect x="50" y="100" width="40" height="100" rx="2" fill="none" stroke="#00a8ff" stroke-width="3" class="glow" />
-                        <line x1="50" y1="120" x2="90" y2="120" stroke="#00a8ff" stroke-width="3" />
-                        <line x1="50" y1="180" x2="90" y2="180" stroke="#00a8ff" stroke-width="3" />
-                        <text x="70" y="90" text-anchor="middle" fill="#00a8ff" class="text-lg">V</text>
-                        <text x="70" y="220" text-anchor="middle" fill="#00a8ff" id="voltage-value" class="text-xl font-bold">12V</text>
+    <div class="glass rounded-2xl shadow-2xl max-w-5xl w-full p-8">
+        <h1 class="text-center text-4xl font-bold mb-6 tracking-wide text-cyan-400">
+            ⚡ Ohm's Law Interactive Circuit
+        </h1>
 
-                        <!-- Circuit lines -->
-                        <path d="M90 150 H150" stroke="#e91e63" stroke-width="4" fill="none" class="circuit-line" />
-                        <path d="M250 150 H310" stroke="#e91e63" stroke-width="4" fill="none" class="circuit-line" />
-                        <path d="M310 150 V250 H50 V150" stroke="#e91e63" stroke-width="4" fill="none" class="circuit-line" />
+        <div class="flex flex-col lg:flex-row gap-8 items-center justify-center">
+            <!-- Python-rendered circuit -->
+            <div class="w-full lg:w-2/3 bg-white rounded-xl p-4 shadow-lg">
+                <py-config>
+                    packages = ["matplotlib"]
+                </py-config>
 
-                        <!-- Resistor -->
-                        <rect x="150" y="125" width="100" height="50" fill="none" stroke="#9c27b0" stroke-width="3" class="glow" />
-                        <line x1="150" y1="135" x2="250" y2="135" stroke="#9c27b0" stroke-width="2" />
-                        <line x1="150" y1="145" x2="250" y2="145" stroke="#9c27b0" stroke-width="2" />
-                        <line x1="150" y1="155" x2="250" y2="155" stroke="#9c27b0" stroke-width="2" />
-                        <line x1="150" y1="165" x2="250" y2="165" stroke="#9c27b0" stroke-width="2" />
-                        <text x="200" y="115" text-anchor="middle" fill="#9c27b0" class="text-lg">R</text>
-                        <text x="200" y="200" text-anchor="middle" fill="#9c27b0" id="resistance-value" class="text-xl font-bold">4Ω</text>
+                <py-script>
+import math
+import matplotlib.pyplot as plt
 
-                        <!-- Ammeter -->
-                        <circle cx="350" cy="150" r="30" fill="none" stroke="#00a8ff" stroke-width="3" class="glow" />
-                        <line x1="350" y1="120" x2="350" y2="180" stroke="#00a8ff" stroke-width="3" />
-                        <line x1="340" y1="130" x2="350" y2="120" stroke="#00a8ff" stroke-width="2" />
-                        <line x1="360" y1="130" x2="350" y2="120" stroke="#00a8ff" stroke-width="2" />
-                        <text x="350" y="150" text-anchor="middle" fill="#00a8ff" class="text-lg">A</text>
-                        <text x="350" y="220" text-anchor="middle" fill="#00a8ff" id="current-value" class="text-xl font-bold">3A</text>
-                    </svg>
-                </div>
+def draw_battery(ax, x, y, height, spacing):
+    ax.plot([x - spacing/2, x - spacing/2], [y - height, y + height])
+    ax.plot([x + spacing/2, x + spacing/2], [y - height/2, y + height/2])
+
+def draw_resistor(ax, x1, y1, x2, y2, zigzags=6, amplitude=0.25):
+    dx = x2 - x1
+    dy = y2 - y1
+    length = (dx**2 + dy**2)**0.5
+    if length == 0:
+        return
+    ux, uy = dx/length, dy/length
+    px, py = -uy, ux
+    pts = [(x1, y1)]
+    segment = length / (zigzags * 2)
+    for i in range(1, zigzags * 2):
+        t = i * segment
+        base_x = x1 + ux * t
+        base_y = y1 + uy * t
+        offset = amplitude if i % 2 == 1 else -amplitude
+        pts.append((base_x + px * offset, base_y + py * offset))
+    pts.append((x2, y2))
+    xs, ys = zip(*pts)
+    ax.plot(xs, ys)
+
+class OhmsLawInteractive:
+    def __init__(self):
+        self.fig, self.ax = plt.subplots(figsize=(6, 4))
+        plt.subplots_adjust(left=0.08, right=0.92, top=0.85, bottom=0.26)
+
+        self.V = 9.0
+        self.R = 100.0
+        self.I = self.V / self.R
+
+        self.left, self.right = -4.0, 4.0
+        self.bottom, self.top = -1.5, 1.5
+
+        self.battery_x = self.left
+        self.battery_y = 0.0
+
+        self.res_left = 0.0
+        self.res_right = self.right
+        self.res_y = 0.0
+
+        self._build_canvas()
+        self._update()
+
+    def _build_canvas(self):
+        ax = self.ax
+        ax.clear()
+        ax.plot([self.left, self.right], [self.top, self.top])
+        ax.plot([self.right, self.right], [self.top, self.bottom])
+        ax.plot([self.left, self.right], [self.bottom, self.bottom])
+        ax.plot([self.left, self.left], [self.bottom, self.top])
+
+        draw_battery(ax, self.battery_x, self.battery_y, height=0.8, spacing=0.6)
+        draw_resistor(ax, self.res_left, self.res_y, self.res_right, self.res_y)
+
+        self.arrow = ax.annotate("", xy=(self.right - 0.5, self.top),
+                                 xytext=(self.left + 0.5, self.top),
+                                 arrowprops=dict(arrowstyle="->", linewidth=2.0))
+
+        self.text_I = ax.text(0.0, self.top + 0.3, "", ha="center", va="bottom", fontsize=11)
+        self.text_V = ax.text(self.left - 0.2, 0.0, "", ha="right", va="center", fontsize=11, rotation=90)
+        self.text_R = ax.text(self.res_right + 0.2, self.res_y, "", ha="left", va="center", fontsize=11)
+        self.eq_text = ax.text(0.0, self.bottom - 0.4, "", ha="center", va="top", fontsize=12)
+
+        ax.set_facecolor("#f8fafc")
+        ax.set_aspect("equal", adjustable="box")
+        ax.set_xlim(self.left - 1.5, self.right + 1.5)
+        ax.set_ylim(self.bottom - 1.0, self.top + 1.0)
+        ax.axis("off")
+
+    def _update(self):
+        V, R = self.V, self.R
+        I = float('nan') if R <= 0 else V / R
+        lw = 1.0 + 4.0 * (0.0 if math.isnan(I) else min(1.0, abs(I)))
+        self.arrow.remove()
+        self.arrow = self.ax.annotate("", xy=(self.right - 0.5, self.top),
+                                      xytext=(self.left + 0.5, self.top),
+                                      arrowprops=dict(arrowstyle="->", linewidth=lw))
+
+        self.text_I.set_text(f"I = {self._fmt(I)} A")
+        self.text_V.set_text(f"V = {self._fmt(V)} V")
+        self.text_R.set_text(f"R = {self._fmt(R)} Ω")
+        self.eq_text.set_text(r"$I = \dfrac{V}{R}$")
+
+    @staticmethod
+    def _fmt(val):
+        if val is None or isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+            return "—"
+        if abs(val) >= 100:
+            return f"{val:.0f}"
+        elif abs(val) >= 10:
+            return f"{val:.1f}"
+        else:
+            return f"{val:.2f}"
+
+app = OhmsLawInteractive()
+plt.show()
+                </py-script>
             </div>
 
-            <div class="bg-dark-secondary rounded-xl p-6 shadow-xl border border-gray-800">
-                <h2 class="text-2xl font-bold mb-6 text-electric-blue border-b border-gray-700 pb-2">Circuit Controls</h2>
-                
-                <div class="space-y-6">
-                    <div class="bg-dark-primary rounded-lg p-4 border border-gray-700">
-                        <h3 class="text-lg font-semibold mb-3 text-electric-purple">Initialize Circuit</h3>
-                        <p class="text-sm text-gray-400 mb-4">Enter any two values to calculate the third</p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label for="init-voltage" class="block text-sm font-medium text-electric-blue mb-1">Voltage (V)</label>
-                                <input type="number" id="init-voltage" placeholder="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
-                            </div>
-                            <div>
-                                <label for="init-current" class="block text-sm font-medium text-electric-blue mb-1">Current (A)</label>
-                                <input type="number" id="init-current" placeholder="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
-                            </div>
-                            <div>
-                                <label for="init-resistance" class="block text-sm font-medium text-electric-blue mb-1">Resistance (Ω)</label>
-                                <input type="number" id="init-resistance" placeholder="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
-                            </div>
-                        </div>
-                        
-                        <button id="init-circuit" class="mt-4 w-full bg-electric-purple hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
-                            Initialize Circuit
-                        </button>
-                    </div>
+            <!-- Info panel -->
+            <div class="w-full lg:w-1/3 space-y-4">
+                <div class="p-4 rounded-lg glass">
+                    <h2 class="text-xl font-semibold text-cyan-300">What is Ohm’s Law?</h2>
+                    <p class="text-gray-300 mt-2 text-sm">
+                        Ohm’s Law defines the relationship between <span class="text-cyan-200">Voltage (V)</span>,
+                        <span class="text-cyan-200">Current (I)</span>, and <span class="text-cyan-200">Resistance (R)</span>:
+                        <code class="bg-gray-800 text-cyan-300 px-1 py-0.5 rounded">V = I × R</code>.
+                    </p>
+                </div>
 
-                    <div class="bg-dark-primary rounded-lg p-4 border border-gray-700">
-                        <h3 class="text-lg font-semibold mb-3 text-electric-pink">Modify Circuit</h3>
-                        <p class="text-sm text-gray-400 mb-4">Change one value to see how it affects the others</p>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label for="modify-param" class="block text-sm font-medium text-electric-pink mb-1">Parameter to Change</label>
-                                <select id="modify-param" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-pink">
-                                    <option value="voltage">Voltage (V)</option>
-                                    <option value="current">Current (A)</option>
-                                    <option value="resistance">Resistance (Ω)</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label for="new-value" class="block text-sm font-medium text-electric-pink mb-1">New Value</label>
-                                <input type="number" id="new-value" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-pink">
-                            </div>
-                            
-                            <button id="update-circuit" class="w-full bg-electric-pink hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
-                                Update Circuit
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="bg-dark-primary rounded-lg p-4 border border-gray-700">
-                        <h3 class="text-lg font-semibold mb-3 text-electric-blue">Circuit Status</h3>
-                        <div class="grid grid-cols-3 gap-4 text-center">
-                            <div class="bg-gray-800 rounded-lg p-3">
-                                <p class="text-sm text-electric-blue">Voltage</p>
-                                <p id="status-voltage" class="text-xl font-bold">12 V</p>
-                            </div>
-                            <div class="bg-gray-800 rounded-lg p-3">
-                                <p class="text-sm text-electric-blue">Current</p>
-                                <p id="status-current" class="text-xl font-bold">3 A</p>
-                            </div>
-                            <div class="bg-gray-800 rounded-lg p-3">
-                                <p class="text-sm text-electric-blue">Resistance</p>
-                                <p id="status-resistance" class="text-xl font-bold">4 Ω</p>
-                            </div>
-                        </div>
-                        <div class="mt-4 bg-gray-800 rounded-lg p-3">
-                            <p class="text-sm text-electric-purple">Power (P = V × I)</p>
-                            <p id="status-power" class="text-xl font-bold">36 W</p>
-                        </div>
-                    </div>
+                <div class="p-4 rounded-lg glass">
+                    <h2 class="text-xl font-semibold text-cyan-300">Tips</h2>
+                    <ul class="list-disc pl-4 text-gray-300 text-sm">
+                        <li>Increase resistance to lower current.</li>
+                        <li>Voltage directly affects current.</li>
+                        <li>Perfect for understanding basic circuits.</li>
+                    </ul>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
-    <script>
-        class Circuit {
-            constructor(voltage, current, resistance) {
-                // Determine which two parameters were provided
-                const providedParams = [];
-                if (voltage !== undefined && voltage !== 0) providedParams.push({type: 'voltage', value: voltage});
-                if (current !== undefined && current !== 0) providedParams.push({type: 'current', value: current});
-                if (resistance !== undefined && resistance !== 0) providedParams.push({type: 'resistance', value: resistance});
-                
-                if (providedParams.length !== 2) {
-                    throw new Error("Exactly two parameters must be provided");
-                }
-                
-                // Set the provided values
-                providedParams.forEach(param => {
-                    this[param.type] = param.value;
-                });
-                
-                // Calculate the missing value
-                if (!this.voltage) {
-                    this.voltage = this.current * this.resistance;
-                } else if (!this.current) {
-                    this.current = this.voltage / this.resistance;
-                } else if (!this.resistance) {
-                    this.resistance = this.voltage / this.current;
-                }
-                
-                this.validate();
-            }
-            
-            validate() {
-                if (this.voltage <= 0 || this.current <= 0 || this.resistance <= 0) {
-                    throw new Error("Values must be positive");
-                }
-                
-                if (!isFinite(this.voltage) || !isFinite(this.current) || !isFinite(this.resistance)) {
-                    throw new Error("Values must be finite numbers");
-                }
-            }
-            
-            updateVoltage(newVoltage) {
-                this.voltage = newVoltage;
-                this.current = this.voltage / this.resistance;
-                this.validate();
-            }
-            
-            updateCurrent(newCurrent) {
-                this.current = newCurrent;
-                this.voltage = this.current * this.resistance;
-                this.validate();
-            }
-            
-            updateResistance(newResistance) {
-                this.resistance = newResistance;
-                this.voltage = this.current * this.resistance;
-                this.validate();
-            }
-            
-            getPower() {
-                return this.voltage * this.current;
-            }
-        }
-
-        let circuit = new Circuit(12, 3); // Default circuit with voltage and current
-
-        function updateUI() {
-            // Update visualization
-            document.getElementById('voltage-value').textContent = `${circuit.voltage.toFixed(2)}V`;
-            document.getElementById('current-value').textContent = `${circuit.current.toFixed(2)}A`;
-            document.getElementById('resistance-value').textContent = `${circuit.resistance.toFixed(2)}Ω`;
-            
-            // Add animation to show change
-            ['voltage-value', 'current-value', 'resistance-value'].forEach(id => {
-                const element = document.getElementById(id);
-                element.classList.add('animate-change');
-                setTimeout(() => element.classList.remove('animate-change'), 500);
-            });
-            
-            // Update status panel
-            document.getElementById('status-voltage').textContent = `${circuit.voltage.toFixed(2)} V`;
-            document.getElementById('status-current').textContent = `${circuit.current.toFixed(2)} A`;
-            document.getElementById('status-resistance').textContent = `${circuit.resistance.toFixed(2)} Ω`;
-            document.getElementById('status-power').textContent = `${circuit.getPower().toFixed(2)} W`;
-            
-            // Animate circuit lines when values change
-            const lines = document.querySelectorAll('.circuit-line');
-            lines.forEach(line => {
-                line.style.animation = 'none';
-                line.offsetHeight; // Trigger reflow
-                line.style.animation = null;
-            });
-        }
-
-        document.getElementById('init-circuit').addEventListener('click', () => {
-            try {
-                const voltage = parseFloat(document.getElementById('init-voltage').value) || 0;
-                const current = parseFloat(document.getElementById('init-current').value) || 0;
-                const resistance = parseFloat(document.getElementById('init-resistance').value) || 0;
-                
-                circuit = new Circuit(
-                    voltage || undefined,
-                    current || undefined,
-                    resistance || undefined
-                );
-                
-                updateUI();
-                
-                // Show success animation
-                const button = document.getElementById('init-circuit');
-                button.textContent = "✓ Success!";
-                button.classList.remove('bg-electric-purple');
-                button.classList.add('bg-green-600');
-                setTimeout(() => {
-                    button.textContent = "Initialize Circuit";
-                    button.classList.remove('bg-green-600');
-                    button.classList.add('bg-electric-purple');
-                }, 1000);
-                
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            }
-        });
-
-        document.getElementById('update-circuit').addEventListener('click', () => {
-            try {
-                const param = document.getElementById('modify-param').value;
-                const newValue = parseFloat(document.getElementById('new-value').value);
-                
-                if (isNaN(newValue) || newValue <= 0) {
-                    alert("Please enter a valid positive number");
-                    return;
-                }
-                
-                switch (param) {
-                    case 'voltage':
-                        circuit.updateVoltage(newValue);
-                        break;
-                    case 'current':
-                        circuit.updateCurrent(newValue);
-                        break;
-                    case 'resistance':
-                        circuit.updateResistance(newValue);
-                        break;
-                }
-                
-                updateUI();
-                
-                // Show success animation
-                const button = document.getElementById('update-circuit');
-                button.textContent = "✓ Updated!";
-                button.classList.remove('bg-electric-pink');
-                button.classList.add('bg-green-600');
-                setTimeout(() => {
-                    button.textContent = "Update Circuit";
-                    button.classList.remove('bg-green-600');
-                    button.classList.add('bg-electric-pink');
-                }, 1000);
-                
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            }
-        });
-
-        // Initialize UI
-        updateUI();
-    </script>
 </body>
 </html>
