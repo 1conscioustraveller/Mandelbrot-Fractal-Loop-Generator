@@ -1,600 +1,605 @@
-        <!-- Project 5: Geometry Explorer -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-2xl font-semibold text-blue-700 mb-4">5. Geometry Explorer</h2>
-            <p class="text-gray-700 mb-4">Explore shapes and their properties.</p>
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometric Animation Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            min-height: 70vh;
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        input[type="range"], select {
+            width: 100%;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
+            padding: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        select option {
+            background: #1e3c72;
+        }
+
+        .value-display {
+            font-size: 0.8em;
+            color: #a8d8ff;
+            text-align: right;
+        }
+
+        .canvas-container {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        #animationCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .preset-btn {
+            font-size: 0.8em;
+            padding: 8px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            max-width: 200px;
+        }
+
+        .color-picker-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
             
-            <div class="flex flex-col md:flex-row gap-6">
-                <div class="flex-1">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Select a shape:</label>
-                        <select id="shapeSelector" onchange="drawSelectedShape()" class="border border-gray-300 rounded py-2 px-4 w-full">
-                            <option value="square">Square</option>
-                            <option value="rectangle">Rectangle</option>
-                            <option value="triangle">Triangle</option>
-                            <option value="circle">Circle</option>
-                        </select>
-                    </div>
-                    
-                    <div class="border border-gray-300 rounded-lg p-4 mb-4">
-                        <canvas id="geometryCanvas" width="350" height="300" class="mx-auto"></canvas>
+            .controls {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Geometric Animation Generator</h1>
+            <p class="subtitle">Create mesmerizing geometric patterns with interactive controls</p>
+        </header>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="shapeType">Shape Type</label>
+                    <select id="shapeType">
+                        <option value="circle">Circle</option>
+                        <option value="square">Square</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="hexagon">Hexagon</option>
+                        <option value="star">Star</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="shapeCount">Shape Count: <span class="value-display" id="shapeCountValue">50</span></label>
+                    <input type="range" id="shapeCount" min="10" max="200" value="50">
+                </div>
+
+                <div class="control-group">
+                    <label for="speed">Speed: <span class="value-display" id="speedValue">2</span></label>
+                    <input type="range" id="speed" min="0.1" max="10" step="0.1" value="2">
+                </div>
+
+                <div class="control-group">
+                    <label for="size">Size: <span class="value-display" id="sizeValue">30</span></label>
+                    <input type="range" id="size" min="5" max="100" value="30">
+                </div>
+
+                <div class="control-group">
+                    <label for="rotationSpeed">Rotation: <span class="value-display" id="rotationValue">1</span></label>
+                    <input type="range" id="rotationSpeed" min="0" max="5" step="0.1" value="1">
+                </div>
+
+                <div class="control-group">
+                    <label for="trail">Trail Effect: <span class="value-display" id="trailValue">0.1</span></label>
+                    <input type="range" id="trail" min="0" max="1" step="0.01" value="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label>Colors</label>
+                    <div class="color-picker-group">
+                        <input type="color" id="color1" value="#ff6b6b">
+                        <input type="color" id="color2" value="#4ecdc4">
+                        <input type="color" id="color3" value="#45b7d1">
                     </div>
                 </div>
-                
-                <div class="flex-1">
-                    <div id="shapeProperties" class="space-y-4">
-                        <div>
-                            <h3 class="font-semibold mb-2">Properties</h3>
-                            <div id="propertiesList" class="text-gray-700">
-                                <!-- Properties will appear here -->
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h3 class="font-semibold mb-2">Calculate Area/Perimeter</h3>
-                            <div id="calculationInputs">
-                                <!-- Input fields will appear here -->
-                            </div>
-                            <button onclick="calculateGeometry()" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Calculate
-                            </button>
-                            <div id="geometryResults" class="mt-2 text-lg font-semibold">
-                                <!-- Results will appear here -->
-                            </div>
-                        </div>
-                    </div>
+
+                <div class="button-group">
+                    <button onclick="startAnimation()">Start</button>
+                    <button onclick="pauseAnimation()">Pause</button>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="resetAnimation()">Reset</button>
+                    <button onclick="randomizeSettings()">Randomize</button>
+                </div>
+
+                <label>Presets</label>
+                <div class="preset-buttons">
+                    <button class="preset-btn" onclick="loadPreset('spiral')">Spiral</button>
+                    <button class="preset-btn" onclick="loadPreset('wave')">Wave</button>
+                    <button class="preset-btn" onclick="loadPreset('burst')">Burst</button>
+                    <button class="preset-btn" onclick="loadPreset('orbit')">Orbit</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="animationCanvas"></canvas>
+                <div class="info-panel">
+                    <div>FPS: <span id="fps">60</span></div>
+                    <div>Shapes: <span id="activeShapes">0</span></div>
+                    <div>Click to add burst effect</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Project 1: Addition Visualizer
-        function allowDrop(event) {
-            event.preventDefault();
+        const canvas = document.getElementById('animationCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let animationId;
+        let shapes = [];
+        let isAnimating = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        let globalRotation = 0;
+        let frameCount = 0;
+        let lastTime = 0;
+
+        // Settings object
+        const settings = {
+            shapeType: 'circle',
+            shapeCount: 50,
+            speed: 2,
+            size: 30,
+            rotationSpeed: 1,
+            trail: 0.1,
+            colors: ['#ff6b6b', '#4ecdc4', '#45b7d1']
+        };
+
+        // Resize canvas
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
         }
 
-        function drag(event) {
-            event.dataTransfer.setData("text", event.target.id);
+        // Shape class
+        class Shape {
+            constructor(x, y, type, size, color, angle = 0, radius = 0) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.size = size;
+                this.color = color;
+                this.angle = angle;
+                this.radius = radius;
+                this.rotation = 0;
+                this.opacity = 1;
+                this.scale = 1;
+            }
+
+            update() {
+                this.angle += settings.speed * 0.01;
+                this.rotation += settings.rotationSpeed * 0.02;
+                this.x = canvas.width / 2 + Math.cos(this.angle) * this.radius;
+                this.y = canvas.height / 2 + Math.sin(this.angle) * this.radius;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.scale(this.scale, this.scale);
+                
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+
+                switch(this.type) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'square':
+                        ctx.fillRect(-this.size, -this.size, this.size * 2, this.size * 2);
+                        break;
+                    case 'triangle':
+                        ctx.beginPath();
+                        ctx.moveTo(0, -this.size);
+                        ctx.lineTo(-this.size, this.size);
+                        ctx.lineTo(this.size, this.size);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    case 'hexagon':
+                        this.drawPolygon(6);
+                        break;
+                    case 'star':
+                        this.drawStar(5);
+                        break;
+                }
+                ctx.restore();
+            }
+
+            drawPolygon(sides) {
+                ctx.beginPath();
+                for (let i = 0; i < sides; i++) {
+                    const angle = (Math.PI * 2 * i) / sides;
+                    const x = Math.cos(angle) * this.size;
+                    const y = Math.sin(angle) * this.size;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            drawStar(points) {
+                ctx.beginPath();
+                for (let i = 0; i < points * 2; i++) {
+                    const radius = i % 2 === 0 ? this.size : this.size / 2;
+                    const angle = (Math.PI * i) / points;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
         }
 
-        function drop(event) {
-            event.preventDefault();
-            const data = event.dataTransfer.getData("text");
-            const draggedElement = document.getElementById(data);
+        // Initialize shapes
+        function initializeShapes() {
+            shapes = [];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
             
-            // Clone the element so it remains in the pool
-            const clone = draggedElement.cloneNode(true);
-            clone.id = 'dragged_' + Date.now(); // Give it a unique ID
-            clone.addEventListener('dragstart', function(e) {
-                drag(e);
+            for (let i = 0; i < settings.shapeCount; i++) {
+                const angle = (Math.PI * 2 * i) / settings.shapeCount;
+                const radius = 50 + (i * 3);
+                const colorIndex = i % settings.colors.length;
+                
+                const shape = new Shape(
+                    centerX + Math.cos(angle) * radius,
+                    centerY + Math.sin(angle) * radius,
+                    settings.shapeType,
+                    settings.size * (0.5 + Math.random() * 0.5),
+                    settings.colors[colorIndex],
+                    angle,
+                    radius
+                );
+                
+                shapes.push(shape);
+            }
+        }
+
+        // Animation loop
+        function animate(currentTime) {
+            if (!isAnimating) return;
+
+            // Calculate FPS
+            frameCount++;
+            if (currentTime - lastTime >= 1000) {
+                document.getElementById('fps').textContent = Math.round(frameCount * 1000 / (currentTime - lastTime));
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            // Clear canvas with trail effect
+            ctx.fillStyle = `rgba(0, 0, 0, ${settings.trail})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw shapes
+            shapes.forEach(shape => {
+                shape.update();
+                shape.draw();
             });
-            
-            event.target.appendChild(clone);
-            updateAdditionNumbers();
+
+            // Update global rotation
+            globalRotation += settings.rotationSpeed * 0.01;
+
+            // Update info
+            document.getElementById('activeShapes').textContent = shapes.length;
+
+            animationId = requestAnimationFrame(animate);
         }
 
-        function updateAdditionNumbers() {
-            const box1Count = document.getElementById('box1').children.length;
-            const box2Count = document.getElementById('box2').children.length;
-            
-            document.getElementById('num1').textContent = box1Count;
-            document.getElementById('num2').textContent = box2Count;
+        // Control functions
+        function startAnimation() {
+            if (!isAnimating) {
+                isAnimating = true;
+                animate(0);
+            }
         }
 
-        function calculateAddition() {
-            const box1Count = document.getElementById('box1').children.length;
-            const box2Count = document.getElementById('box2').children.length;
-            const sum = box1Count + box2Count;
-            
-            document.getElementById('sum').textContent = sum;
+        function pauseAnimation() {
+            isAnimating = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
         }
 
-        // Initialize draggable objects
-        document.querySelectorAll('.fruit').forEach(item => {
-            item.addEventListener('dragstart', function(e) {
-                drag(e);
+        function resetAnimation() {
+            pauseAnimation();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            initializeShapes();
+            startAnimation();
+        }
+
+        function randomizeSettings() {
+            document.getElementById('shapeCount').value = Math.floor(Math.random() * 150) + 50;
+            document.getElementById('speed').value = (Math.random() * 9 + 1).toFixed(1);
+            document.getElementById('size').value = Math.floor(Math.random() * 70) + 20;
+            document.getElementById('rotationSpeed').value = (Math.random() * 4 + 1).toFixed(1);
+            document.getElementById('trail').value = (Math.random() * 0.3 + 0.05).toFixed(2);
+            
+            updateSettings();
+            resetAnimation();
+        }
+
+        // Presets
+        function loadPreset(preset) {
+            switch(preset) {
+                case 'spiral':
+                    settings.shapeType = 'circle';
+                    settings.shapeCount = 80;
+                    settings.speed = 3;
+                    settings.size = 20;
+                    settings.rotationSpeed = 2;
+                    settings.trail = 0.05;
+                    break;
+                case 'wave':
+                    settings.shapeType = 'triangle';
+                    settings.shapeCount = 60;
+                    settings.speed = 1.5;
+                    settings.size = 25;
+                    settings.rotationSpeed = 0.5;
+                    settings.trail = 0.2;
+                    break;
+                case 'burst':
+                    settings.shapeType = 'star';
+                    settings.shapeCount = 100;
+                    settings.speed = 5;
+                    settings.size = 15;
+                    settings.rotationSpeed = 3;
+                    settings.trail = 0.02;
+                    break;
+                case 'orbit':
+                    settings.shapeType = 'hexagon';
+                    settings.shapeCount = 40;
+                    settings.speed = 1;
+                    settings.size = 35;
+                    settings.rotationSpeed = 1.5;
+                    settings.trail = 0.15;
+                    break;
+            }
+            
+            // Update UI
+            document.getElementById('shapeType').value = settings.shapeType;
+            document.getElementById('shapeCount').value = settings.shapeCount;
+            document.getElementById('speed').value = settings.speed;
+            document.getElementById('size').value = settings.size;
+            document.getElementById('rotationSpeed').value = settings.rotationSpeed;
+            document.getElementById('trail').value = settings.trail;
+            
+            updateSettings();
+            resetAnimation();
+        }
+
+        // Update settings from UI
+        function updateSettings() {
+            settings.shapeType = document.getElementById('shapeType').value;
+            settings.shapeCount = parseInt(document.getElementById('shapeCount').value);
+            settings.speed = parseFloat(document.getElementById('speed').value);
+            settings.size = parseInt(document.getElementById('size').value);
+            settings.rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
+            settings.trail = parseFloat(document.getElementById('trail').value);
+            settings.colors = [
+                document.getElementById('color1').value,
+                document.getElementById('color2').value,
+                document.getElementById('color3').value
+            ];
+
+            // Update value displays
+            document.getElementById('shapeCountValue').textContent = settings.shapeCount;
+            document.getElementById('speedValue').textContent = settings.speed;
+            document.getElementById('sizeValue').textContent = settings.size;
+            document.getElementById('rotationValue').textContent = settings.rotationSpeed;
+            document.getElementById('trailValue').textContent = settings.trail;
+        }
+
+        // Event listeners
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initializeShapes();
+        });
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Add burst effect
+            for (let i = 0; i < 10; i++) {
+                const angle = (Math.PI * 2 * i) / 10;
+                const burstShape = new Shape(
+                    x, y,
+                    settings.shapeType,
+                    settings.size * 0.8,
+                    settings.colors[Math.floor(Math.random() * settings.colors.length)],
+                    angle,
+                    0
+                );
+                burstShape.radius = Math.random() * 100 + 50;
+                shapes.push(burstShape);
+            }
+        });
+
+        // Control event listeners
+        document.getElementById('shapeType').addEventListener('change', () => {
+            updateSettings();
+            resetAnimation();
+        });
+
+        ['shapeCount', 'speed', 'size', 'rotationSpeed', 'trail'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                updateSettings();
             });
         });
 
-        // Project 2: Multiplication Table Generator
-            
-       <!-- Project 2: Multiplication Table Generator -->
-<div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-    <h2 class="text-2xl font-semibold text-blue-700 mb-4">2. Multiplication Table Generator</h2>
-    <p class="text-gray-700 mb-4">Generate a multiplication table for any number.</p>
-    
-    <div class="flex flex-col md:flex-row gap-4 items-center mb-6">
-        <div class="flex-1">
-            <label for="multiplier" class="block text-gray-700 mb-2">Enter a number:</label>
-            <input type="number" id="multiplier" min="1" max="12" value="5" 
-                   class="border border-gray-300 rounded py-2 px-4 w-full" onchange="generateTable()">
-        </div>
-        <button onclick="generateTable()" 
-                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded h-12">
-            Generate Table
-        </button>
-    </div>
-    
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-gray-50 border border-gray-200">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="py-2 px-4 border">Multiplier</th>
-                    <th class="py-2 px-4 border">×</th>
-                    <th class="py-2 px-4 border">Multiplicand</th>
-                    <th class="py-2 px-4 border">=</th>
-                    <th class="py-2 px-4 border">Product</th>
-                </tr>
-            </thead>
-            <tbody id="multiplicationTable">
-                <!-- Table will be generated by JavaScript -->
-            </tbody>
-        </table>
-    </div>
-</div>
+        document.getElementById(id).addEventListener('change', () => {
+            updateSettings();
+            resetAnimation();
+        });
 
-<script>
+        ['color1', 'color2', 'color3'].forEach(id => {
+            document.getElementById(id).addEventListener('change', updateSettings);
+        });
 
-
-        // Project 3: Fraction Visualizer
-        function drawFraction() {
-            const numerator = parseInt(document.getElementById('numerator').value);
-            const denominator = parseInt(document.getElementById('denominator').value);
-            const canvas = document.getElementById('fractionCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw the whole (circle or rectangle)
-            ctx.fillStyle = '#E5E7EB';
-            ctx.fillRect(50, 50, 200, 100);
-            ctx.strokeStyle = '#6B7280';
-            ctx.strokeRect(50, 50, 200, 100);
-            
-            // Draw the parts
-            const partWidth = 200 / denominator;
-            ctx.fillStyle = '#3B82F6';
-            
-            for (let i = 0; i < numerator; i++) {
-                ctx.fillRect(50 + (i * partWidth), 50, partWidth, 100);
-            }
-            
-            // Draw dividing lines
-            ctx.strokeStyle = '#1D4ED8';
-            for (let i = 1; i < denominator; i++) {
-                ctx.beginPath();
-                ctx.moveTo(50 + (i * partWidth), 50);
-                ctx.lineTo(50 + (i * partWidth), 150);
-                ctx.stroke();
-            }
-            
-            // Display fraction text
-            ctx.fillStyle = '#000000';
-            ctx.font = '24px Arial';
-            ctx.fillText(`${numerator}/${denominator}`, 130, 190);
-            
-            // Show equivalent fractions
-            showEquivalentFractions(numerator, denominator);
-            showFractionInfo(numerator, denominator);
-        }
-
-        function showEquivalentFractions(numerator, denominator) {
-            const container = document.getElementById('equivalentFractions');
-            container.innerHTML = '';
-            
-            // Find up to 5 equivalent fractions
-            let count = 0;
-            for (let factor = 2; factor <= 5 && count < 5; factor++) {
-                if (denominator * factor <= 50) { // Limit denominator size
-                    const equivNumerator = numerator * factor;
-                    const equivDenominator = denominator * factor;
-                    
-                    const div = document.createElement('div');
-                    div.className = 'bg-blue-50 p-2 rounded';
-                    div.textContent = `${numerator}/${denominator} = ${equivNumerator}/${equivDenominator}`;
-                    container.appendChild(div);
-                    count++;
-                }
-            }
-            
-            if (count === 0) {
-                const div = document.createElement('div');
-                div.className = 'text-gray-500';
-                div.textContent = 'No equivalent fractions with denominator ≤ 50';
-                container.appendChild(div);
-            }
-        }
-
-        function showFractionInfo(numerator, denominator) {
-            const container = document.getElementById('fractionInfo');
-            
-            // Simplify fraction
-            const gcd = findGCD(numerator, denominator);
-            const simplifiedNum = numerator / gcd;
-            const simplifiedDen = denominator / gcd;
-            
-            // Convert to decimal
-            const decimalValue = (numerator / denominator).toFixed(3);
-            
-            // Convert to percentage
-            const percentage = (numerator / denominator * 100).toFixed(1);
-            
-            container.innerHTML = `
-                <p><strong>Simplified:</strong> ${simplifiedNum}/${simplifiedDen}</p>
-                <p><strong>Decimal:</strong> ${decimalValue}</p>
-                <p><strong>Percentage:</strong> ${percentage}%</p>
-            `;
-        }
-
-        function findGCD(a, b) {
-            return b === 0 ? a : findGCD(b, a % b);
-        }
-
-        // Initialize fraction visualizer
-        drawFraction();
-
-        // Project 4: Word Problem Generator
-        let currentProblem = null;
-        let score = 0;
-        let totalProblems = 0;
-
-        const additionProblems = [
-            { problem: "Sarah has {a} apples. Her friend gives her {b} more. How many apples does Sarah have now?", answer: (a, b) => a + b },
-            { problem: "There are {a} birds on a tree. {b} more birds join them. How many birds are there now?", answer: (a, b) => a + b },
-            { problem: "A classroom has {a} boys and {b} girls. How many students are there in total?", answer: (a, b) => a + b }
-        ];
-
-        const subtractionProblems = [
-            { problem: "Mike has {a} candies. He eats {b} of them. How many candies does Mike have left?", answer: (a, b) => a - b },
-            { problem: "There were {a} flowers in the garden. {b} of them wilted. How many flowers are still blooming?", answer: (a, b) => a - b },
-            { problem: "A book has {a} pages. You've read {b} pages. How many pages are left to read?", answer: (a, b) => a - b }
-        ];
-
-        const multiplicationProblems = [
-            { problem: "There are {a} bags with {b} marbles in each. How many marbles are there in total?", answer: (a, b) => a * b },
-            { problem: "A pizza has {a} slices. If you have {b} pizzas, how many slices are there altogether?", answer: (a, b) => a * b },
-            { problem: "Each box contains {a} crayons. How many crayons are there in {b} boxes?", answer: (a, b) => a * b }
-        ];
-
-        const divisionProblems = [
-            { problem: "You have {a} cookies to share equally among {b} friends. How many cookies does each friend get?", answer: (a, b) => Math.floor(a / b) },
-            { problem: "{a} students need to be divided into {b} teams. How many students will be on each team?", answer: (a, b) => Math.floor(a / b) },
-            { problem: "A {a} inch rope is cut into {b} equal pieces. How long is each piece?", answer: (a, b) => (a / b).toFixed(1) }
-        ];
-
-        function generateProblem(operation) {
-            let problems, a, b;
-            
-            switch(operation) {
-                case 'addition':
-                    problems = additionProblems;
-                    a = Math.floor(Math.random() * 20) + 5;
-                    b = Math.floor(Math.random() * 20) + 5;
-                    break;
-                case 'subtraction':
-                    problems = subtractionProblems;
-                    a = Math.floor(Math.random() * 30) + 10;
-                    b = Math.floor(Math.random() * (a - 5)) + 5;
-                    break;
-                case 'multiplication':
-                    problems = multiplicationProblems;
-                    a = Math.floor(Math.random() * 10) + 2;
-                    b = Math.floor(Math.random() * 10) + 2;
-                    break;
-                case 'division':
-                    problems = divisionProblems;
-                    b = Math.floor(Math.random() * 5) + 2;
-                    a = b * (Math.floor(Math.random() * 8) + 3);
-                    break;
-            }
-            
-            const selectedProblem = problems[Math.floor(Math.random() * problems.length)];
-            const problemText = selectedProblem.problem.replace('{a}', a).replace('{b}', b);
-            
-            currentProblem = {
-                text: problemText,
-                answer: selectedProblem.answer(a, b),
-                operation: operation
-            };
-            
-            document.getElementById('wordProblem').textContent = problemText;
-            document.getElementById('userAnswer').value = '';
-            document.getElementById('solutionSteps').innerHTML = '';
-        }
-
-        function checkAnswer() {
-            if (!currentProblem) {
-                alert('Please generate a problem first!');
-                return;
-            }
-            
-            const userAnswer = parseFloat(document.getElementById('userAnswer').value);
-            if (isNaN(userAnswer)) {
-                alert('Please enter a valid number!');
-                return;
-            }
-            
-            totalProblems++;
-            let isCorrect = false;
-            let solutionSteps = '';
-            
-            // Check answer with some tolerance for floating point
-            if (typeof currentProblem.answer === 'number') {
-                isCorrect = Math.abs(userAnswer - currentProblem.answer) < 0.001;
-            } else {
-                isCorrect = userAnswer.toString() === currentProblem.answer.toString();
-            }
-            
-            // Generate solution steps based on operation
-            const parts = currentProblem.text.split(' ');
-            const a = parseFloat(parts[parts.findIndex(p => p === '{a}') - 1]);
-            const b = parseFloat(parts[parts.findIndex(p => p === '{b}') - 1]);
-            
-            switch(currentProblem.operation) {
-                case 'addition':
-                    solutionSteps = `${a} + ${b} = ${a + b}`;
-                    break;
-                case 'subtraction':
-                    solutionSteps = `${a} - ${b} = ${a - b}`;
-                    break;
-                case 'multiplication':
-                    solutionSteps = `${a} × ${b} = ${a * b}`;
-                    break;
-                case 'division':
-                    solutionSteps = `${a} ÷ ${b} = ${(a / b).toFixed(1)}`;
-                    break;
-            }
-            
-            if (isCorrect) {
-                score++;
-                document.getElementById('solutionSteps').innerHTML = `
-                    <p class="text-green-600 font-semibold">Correct!</p>
-                    <p>${solutionSteps}</p>
-                `;
-            } else {
-                document.getElementById('solutionSteps').innerHTML = `
-                    <p class="text-red-600 font-semibold">Incorrect. The correct answer is ${currentProblem.answer}.</p>
-                    <p>${solutionSteps}</p>
-                `;
-            }
-            
-            // Update score display
-            document.getElementById('score').textContent = score;
-            document.getElementById('total').textContent = totalProblems;
-            document.getElementById('progressBar').style.width = `${(score / totalProblems) * 100}%`;
-        }
-
-        // Project 5: Geometry Explorer
-        function drawSelectedShape() {
-            const shape = document.getElementById('shapeSelector').value;
-            const canvas = document.getElementById('geometryCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw selected shape
-            switch(shape) {
-                case 'square':
-                    drawSquare(ctx);
-                    updateSquareProperties();
-                    break;
-                case 'rectangle':
-                    drawRectangle(ctx);
-                    updateRectangleProperties();
-                    break;
-                case 'triangle':
-                    drawTriangle(ctx);
-                    updateTriangleProperties();
-                    break;
-                case 'circle':
-                    drawCircle(ctx);
-                    updateCircleProperties();
-                    break;
-            }
-        }
-
-        function drawSquare(ctx) {
-            const side = 150;
-            ctx.fillStyle = '#93C5FD';
-            ctx.fillRect(100, 75, side, side);
-            ctx.strokeStyle = '#1E40AF';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(100, 75, side, side);
-            
-            // Label sides
-            ctx.fillStyle = '#000000';
-            ctx.font = '14px Arial';
-            ctx.fillText(`${side}px`, 100 + side/2 - 20, 75 - 10);
-            ctx.fillText(`${side}px`, 100 + side + 10, 75 + side/2);
-        }
-
-        function updateSquareProperties() {
-            const side = 150;
-            document.getElementById('propertiesList').innerHTML = `
-                <ul class="list-disc pl-5">
-                    <li>All sides are equal (${side}px each)</li>
-                    <li>All angles are 90 degrees</li>
-                    <li>Has 4 lines of symmetry</li>
-                </ul>
-            `;
-            
-            document.getElementById('calculationInputs').innerHTML = `
-                <p>Side length: ${side}px</p>
-            `;
-        }
-
-        function drawRectangle(ctx) {
-            const width = 180;
-            const height = 100;
-            ctx.fillStyle = '#86EFAC';
-            ctx.fillRect(85, 100, width, height);
-            ctx.strokeStyle = '#166534';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(85, 100, width, height);
-            
-            // Label sides
-            ctx.fillStyle = '#000000';
-            ctx.font = '14px Arial';
-            ctx.fillText(`${width}px`, 85 + width/2 - 20, 100 - 10);
-            ctx.fillText(`${height}px`, 85 + width + 10, 100 + height/2);
-        }
-
-        function updateRectangleProperties() {
-            const width = 180;
-            const height = 100;
-            document.getElementById('propertiesList').innerHTML = `
-                <ul class="list-disc pl-5">
-                    <li>Opposite sides are equal (${width}px and ${height}px)</li>
-                    <li>All angles are 90 degrees</li>
-                    <li>Has 2 lines of symmetry</li>
-                </ul>
-            `;
-            
-            document.getElementById('calculationInputs').innerHTML = `
-                <div class="flex gap-2 mb-2">
-                    <label>Width:</label>
-                    <input type="number" id="rectWidth" value="${width}" class="border border-gray-300 rounded py-1 px-2 w-20">
-                </div>
-                <div class="flex gap-2">
-                    <label>Height:</label>
-                    <input type="number" id="rectHeight" value="${height}" class="border border-gray-300 rounded py-1 px-2 w-20">
-                </div>
-            `;
-        }
-
-        function drawTriangle(ctx) {
-            // Equilateral triangle
-            const side = 150;
-            const height = side * Math.sqrt(3) / 2;
-            const centerX = 175;
-            const centerY = 150;
-            
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY - height/2);
-            ctx.lineTo(centerX - side/2, centerY + height/2);
-            ctx.lineTo(centerX + side/2, centerY + height/2);
-            ctx.closePath();
-            
-            ctx.fillStyle = '#FCA5A5';
-            ctx.fill();
-            ctx.strokeStyle = '#991B1B';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Label sides
-            ctx.fillStyle = '#000000';
-            ctx.font = '14px Arial';
-            ctx.fillText(`${side}px`, centerX, centerY + height/2 + 20);
-        }
-
-        function updateTriangleProperties() {
-            const side = 150;
-            document.getElementById('propertiesList').innerHTML = `
-                <ul class="list-disc pl-5">
-                    <li>All sides are equal (${side}px each)</li>
-                    <li>All angles are 60 degrees</li>
-                    <li>Has 3 lines of symmetry</li>
-                </ul>
-            `;
-            
-            document.getElementById('calculationInputs').innerHTML = `
-                <div class="flex gap-2 mb-2">
-                    <label>Side length:</label>
-                    <input type="number" id="triangleSide" value="${side}" class="border border-gray-300 rounded py-1 px-2 w-20">
-                </div>
-            `;
-        }
-
-        function drawCircle(ctx) {
-            const radius = 70;
-            const centerX = 175;
-            const centerY = 150;
-            
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#C4B5FD';
-            ctx.fill();
-            ctx.strokeStyle = '#5B21B6';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Draw radius
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(centerX + radius, centerY);
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 3]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            // Label radius
-            ctx.fillStyle = '#000000';
-            ctx.font = '14px Arial';
-            ctx.fillText(`${radius}px`, centerX + radius/2, centerY + 20);
-        }
-
-        function updateCircleProperties() {
-            const radius = 70;
-            document.getElementById('propertiesList').innerHTML = `
-                <ul class="list-disc pl-5">
-                    <li>All points are equidistant from the center (radius = ${radius}px)</li>
-                    <li>Has infinite lines of symmetry</li>
-                    <li>Circumference = 2πr ≈ ${(2 * Math.PI * radius).toFixed(1)}px</li>
-                </ul>
-            `;
-            
-            document.getElementById('calculationInputs').innerHTML = `
-                <div class="flex gap-2 mb-2">
-                    <label>Radius:</label>
-                    <input type="number" id="circleRadius" value="${radius}" class="border border-gray-300 rounded py-1 px-2 w-20">
-                </div>
-            `;
-        }
-
-        function calculateGeometry() {
-            const shape = document.getElementById('shapeSelector').value;
-            let area, perimeter, html;
-            
-            switch(shape) {
-                case 'square':
-                    const side = 150;
-                    area = side * side;
-                    perimeter = 4 * side;
-                    html = `Area = ${area}px²<br>Perimeter = ${perimeter}px`;
-                    break;
-                case 'rectangle':
-                    const width = parseInt(document.getElementById('rectWidth').value) || 180;
-                    const height = parseInt(document.getElementById('rectHeight').value) || 100;
-                    area = width * height;
-                    perimeter = 2 * (width + height);
-                    html = `Area = ${area}px²<br>Perimeter = ${perimeter}px`;
-                    break;
-                case 'triangle':
-                    const triangleSide = parseInt(document.getElementById('triangleSide').value) || 150;
-                    area = (Math.sqrt(3)/4) * triangleSide * triangleSide;
-                    perimeter = 3 * triangleSide;
-                    html = `Area ≈ ${area.toFixed(1)}px²<br>Perimeter = ${perimeter}px`;
-                    break;
-                case 'circle':
-                    const radius = parseInt(document.getElementById('circleRadius').value) || 70;
-                    area = Math.PI * radius * radius;
-                    perimeter = 2 * Math.PI * radius;
-                    html = `Area ≈ ${area.toFixed(1)}px²<br>Circumference ≈ ${perimeter.toFixed(1)}px`;
-                    break;
-            }
-            
-            document.getElementById('geometryResults').innerHTML = html;
-        }
-
-        // Initialize geometry explorer
-        drawSelectedShape();
+        // Initialize
+        resizeCanvas();
+        updateSettings();
+        initializeShapes();
+        startAnimation();
     </script>
 </body>
 </html>
-
-
-
-
+```
