@@ -1,141 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ohm's Law Calculator</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Optional: Custom styles for a futuristic glow effect */
-    .neon-text {
-      text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
-    }
-    .neon-border {
-      box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff inset;
-    }
-  </style>
-</head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center font-mono">
-
-  <div class="max-w-2xl w-full p-8 rounded-xl bg-gray-800 bg-opacity-70 backdrop-blur-lg shadow-lg border border-gray-700">
-    <h1 class="text-4xl font-bold mb-6 neon-text text-center">Ohm's Law Calculator</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div>
-        <label class="block mb-2 font-semibold" for="value1">Value 1</label>
-        <input type="number" id="value1" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Enter first value" />
-      </div>
-      <div>
-        <label class="block mb-2 font-semibold" for="value2">Value 2</label>
-        <input type="number" id="value2" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Enter second value" />
-      </div>
-    </div>
-
-    <div class="mb-4">
-      <p class="mb-2 font-semibold">Select value to calculate:</p>
-      <div class="flex space-x-4 justify-center">
-        <label class="inline-flex items-center">
-          <input type="radio" class="form-radio text-cyan-400" name="calculate" value="voltage" checked>
-          <span class="ml-2">Voltage (V)</span>
-        </label>
-        <label class="inline-flex items-center">
-          <input type="radio" class="form-radio text-cyan-400" name="calculate" value="current">
-          <span class="ml-2">Current (I)</span>
-        </label>
-        <label class="inline-flex items-center">
-          <input type="radio" class="form-radio text-cyan-400" name="calculate" value="resistance">
-          <span class="ml-2">Resistance (R)</span>
-        </label>
-      </div>
-    </div>
-
-    <button id="calculateBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-6 rounded-lg transition duration-300">Calculate</button>
-
-    <div class="mt-6 p-4 rounded-lg bg-gray-700 border border-gray-600 text-center">
-      <h2 class="text-2xl font-bold mb-2 neon-text">Result:</h2>
-      <p id="result" class="text-xl">Enter values and select what to calculate.</p>
-    </div>
-  </div>
-
-  <script>
-    const value1Input = document.getElementById('value1');
-    const value2Input = document.getElementById('value2');
-    const resultPara = document.getElementById('result');
-    const calculateBtn = document.getElementById('calculateBtn');
-
-    function getSelectedCalculation() {
-      const radios = document.getElementsByName('calculate');
-      for (const radio of radios) {
-        if (radio.checked) {
-          return radio.value;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ohm's Law Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        electric: {
+                            blue: '#00a8ff',
+                            purple: '#9c27b0',
+                            pink: '#e91e63',
+                        },
+                        dark: {
+                            primary: '#1a1a2e',
+                            secondary: '#16213e',
+                        }
+                    },
+                    fontFamily: {
+                        futura: ['Futura', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
         }
-      }
-      return null;
-    }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .circuit-line {
+            stroke-dasharray: 10;
+            animation: dash 30s linear infinite;
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 1000;
+            }
+        }
+        .glow {
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+    </style>
+</head>
+<body class="bg-dark-primary text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-electric-blue">
+                <span class="glow">OHM'S LAW SIMULATOR</span>
+            </h1>
+            <p class="text-xl text-electric-purple">V = I × R</p>
+            <div class="w-full max-w-md mx-auto mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-electric-blue rounded-lg blur opacity-20"></div>
+                    <div class="relative bg-dark-secondary rounded-lg p-1">
+                        <div class="bg-dark-primary rounded-md p-4">
+                            <p class="text-sm">Explore how voltage (V), current (I), and resistance (R) interact in real-time</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-    function parseInput(id) {
-      const val = document.getElementById(id).value;
-      return val !== '' ? parseFloat(val) : null;
-    }
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div class="bg-dark-secondary rounded-xl p-6 shadow-xl border border-gray-800">
+                <h2 class="text-2xl font-bold mb-6 text-electric-pink border-b border-gray-700 pb-2">Circuit Visualization</h2>
+                <div class="flex justify-center items-center">
+                    <svg width="400" height="300" viewBox="0 0 400 300" class="circuit-diagram">
+                        <!-- Battery -->
+                        <rect x="50" y="100" width="40" height="100" rx="2" fill="none" stroke="#00a8ff" stroke-width="3" class="glow" />
+                        <line x1="50" y1="120" x2="90" y2="120" stroke="#00a8ff" stroke-width="3" />
+                        <line x1="50" y1="180" x2="90" y2="180" stroke="#00a8ff" stroke-width="3" />
+                        <text x="70" y="90" text-anchor="middle" fill="#00a8ff" class="text-lg">V</text>
+                        <text x="70" y="220" text-anchor="middle" fill="#00a8ff" id="voltage-value" class="text-xl font-bold">12V</text>
 
-    function calculate() {
-      const val1 = parseInput('value1');
-      const val2 = parseInput('value2');
-      const toCalculate = getSelectedCalculation();
+                        <!-- Circuit lines -->
+                        <path d="M90 150 H150" stroke="#e91e63" stroke-width="4" fill="none" class="circuit-line" />
+                        <path d="M250 150 H310" stroke="#e91e63" stroke-width="4" fill="none" class="circuit-line" />
+                        <path d="M310 150 V250 H50 V150" stroke="#e91e63" stroke-width="4" fill="none" class="circuit-line" />
 
-      let voltage = null, current = null, resistance = null;
+                        <!-- Resistor -->
+                        <rect x="150" y="125" width="100" height="50" fill="none" stroke="#9c27b0" stroke-width="3" class="glow" />
+                        <line x1="150" y1="135" x2="250" y2="135" stroke="#9c27b0" stroke-width="2" />
+                        <line x1="150" y1="145" x2="250" y2="145" stroke="#9c27b0" stroke-width="2" />
+                        <line x1="150" y1="155" x2="250" y2="155" stroke="#9c27b0" stroke-width="2" />
+                        <line x1="150" y1="165" x2="250" y2="165" stroke="#9c27b0" stroke-width="2" />
+                        <text x="200" y="115" text-anchor="middle" fill="#9c27b0" class="text-lg">R</text>
+                        <text x="200" y="200" text-anchor="middle" fill="#9c27b0" id="resistance-value" class="text-xl font-bold">4Ω</text>
 
-      // Assign known values based on user input
-      switch (toCalculate) {
-        case 'voltage':
-          resistance = val1;
-          current = val2;
-          if (resistance !== null && current !== null) {
-            voltage = resistance * current;
-            resultPara.innerHTML = `
-              <span class="font-semibold">Voltage (V):</span> ${voltage.toFixed(2)} V<br>
-              <span class="font-semibold">Current (I):</span> ${current} A<br>
-              <span class="font-semibold">Resistance (R):</span> ${resistance} Ω
-            `;
-          } else {
-            resultPara.textContent = 'Please enter both Resistance and Current.';
-          }
-          break;
-        case 'current':
-          voltage = val1;
-          resistance = val2;
-          if (voltage !== null && resistance !== null) {
-            current = voltage / resistance;
-            resultPara.innerHTML = `
-              <span class="font-semibold">Voltage (V):</span> ${voltage} V<br>
-              <span class="font-semibold">Current (I):</span> ${current.toFixed(2)} A<br>
-              <span class="font-semibold">Resistance (R):</span> ${resistance} Ω
-            `;
-          } else {
-            resultPara.textContent = 'Please enter both Voltage and Resistance.';
-          }
-          break;
-        case 'resistance':
-          voltage = val1;
-          current = val2;
-          if (voltage !== null && current !== null) {
-            resistance = voltage / current;
-            resultPara.innerHTML = `
-              <span class="font-semibold">Voltage (V):</span> ${voltage} V<br>
-              <span class="font-semibold">Current (I):</span> ${current} A<br>
-              <span class="font-semibold">Resistance (R):</span> ${resistance.toFixed(2)} Ω
-            `;
-          } else {
-            resultPara.textContent = 'Please enter both Voltage and Current.';
-          }
-          break;
-        default:
-          resultPara.textContent = 'Please select a calculation.';
-      }
-    }
+                        <!-- Ammeter -->
+                        <circle cx="350" cy="150" r="30" fill="none" stroke="#00a8ff" stroke-width="3" class="glow" />
+                        <line x1="350" y1="120" x2="350" y2="180" stroke="#00a8ff" stroke-width="3" />
+                        <line x1="340" y1="130" x2="350" y2="120" stroke="#00a8ff" stroke-width="2" />
+                        <line x1="360" y1="130" x2="350" y2="120" stroke="#00a8ff" stroke-width="2" />
+                        <text x="350" y="150" text-anchor="middle" fill="#00a8ff" class="text-lg">A</text>
+                        <text x="350" y="220" text-anchor="middle" fill="#00a8ff" id="current-value" class="text-xl font-bold">3A</text>
+                    </svg>
+                </div>
+            </div>
 
-    document.getElementById('calculateBtn').addEventListener('click', calculate);
-  </script>
+            <div class="bg-dark-secondary rounded-xl p-6 shadow-xl border border-gray-800">
+                <h2 class="text-2xl font-bold mb-6 text-electric-blue border-b border-gray-700 pb-2">Circuit Controls</h2>
+                
+                <div class="space-y-6">
+                    <div class="bg-dark-primary rounded-lg p-4 border border-gray-700">
+                        <h3 class="text-lg font-semibold mb-3 text-electric-purple">Initialize Circuit</h3>
+                        <p class="text-sm text-gray-400 mb-4">Enter any two values to calculate the third</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="init-voltage" class="block text-sm font-medium text-electric-blue mb-1">Voltage (V)</label>
+                                <input type="number" id="init-voltage" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
+                            </div>
+                            <div>
+                                <label for="init-current" class="block text-sm font-medium text-electric-blue mb-1">Current (A)</label>
+                                <input type="number" id="init-current" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
+                            </div>
+                            <div>
+                                <label for="init-resistance" class="block text-sm font-medium text-electric-blue mb-1">Resistance (Ω)</label>
+                                <input type="number" id="init-resistance" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
+                            </div>
+                        </div>
+                        
+                        <button id="init-circuit" class="mt-4 w-full bg-electric-purple hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
+                            Initialize Circuit
+                        </button>
+                    </div>
 
+                    <div class="bg-dark-primary rounded-lg p-4 border border-gray-700">
+                        <h3 class="text-lg font-semibold mb-3 text-electric-pink">Modify Circuit</h3>
+                        <p class="text-sm text-gray-400 mb-4">Change one value to see how it affects the others</p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="modify-param" class="block text-sm font-medium text-electric-pink mb-1">Parameter to Change</label>
+                                <select id="modify-param" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-pink">
+                                    <option value="voltage">Voltage (V)</option>
+                                    <option value="current">Current (A)</option>
+                                    <option value="resistance">Resistance (Ω)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="new-value" class="block text-sm font-medium text-electric-pink mb-1">New Value</label>
+                                <input type="number" id="new-value" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-pink">
+                            </div>
+                            
+                            <button id="update-circuit" class="w-full bg-electric-pink hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
+                                Update Circuit
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark-primary rounded-lg p-4 border border-gray-700">
+                        <h3 class="text-lg font-semibold mb-3 text-electric-blue">Circuit Status</h3>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div class="bg-gray-800 rounded-lg p-3">
+                                <p class="text-sm text-electric-blue">Voltage</p>
+                                <p id="status-voltage" class="text-xl font-bold">12 V</p>
+                            </div>
+                            <div class="bg-gray-800 rounded-lg p-3">
+                                <p class="text-sm text-electric-blue">Current</p>
+                                <p id="status-current" class="text-xl font-bold">3 A</p>
+                            </div>
+                            <div class="bg-gray-800 rounded-lg p-3">
+                                <p class="text-sm text-electric-blue">Resistance</p>
+                                <p id="status-resistance" class="text-xl font-bold">4 Ω</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-gray-800 rounded-lg p-3">
+                            <p class="text-sm text-electric-purple">Power (P = V × I)</p>
+                            <p id="status-power" class="text-xl font-bold">36 W</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class Circuit {
+            constructor(voltage, current, resistance) {
+                if (arguments.length !== 2) {
+                    throw new Error("Exactly two parameters must be provided");
+                }
+                
+                if (voltage !== undefined && current !== undefined) {
+                    this.voltage = voltage;
+                    this.current = current;
+                    this.resistance = voltage / current;
+                } else if (voltage !== undefined && resistance !== undefined) {
+                    this.voltage = voltage;
+                    this.resistance = resistance;
+                    this.current = voltage / resistance;
+                } else if (current !== undefined && resistance !== undefined) {
+                    this.current = current;
+                    this.resistance = resistance;
+                    this.voltage = current * resistance;
+                } else {
+                    throw new Error("Invalid parameter combination");
+                }
+                
+                this.validate();
+            }
+            
+            validate() {
+                if (this.voltage <= 0 || this.current <= 0 || this.resistance <= 0) {
+                    throw new Error("Values must be positive");
+                }
+                
+                if (!isFinite(this.voltage) || !isFinite(this.current) || !isFinite(this.resistance)) {
+                    throw new Error("Values must be finite numbers");
+                }
+            }
+            
+            updateVoltage(newVoltage) {
+                this.voltage = newVoltage;
+                this.current = this.voltage / this.resistance;
+                this.validate();
+            }
+            
+            updateCurrent(newCurrent) {
+                this.current = newCurrent;
+                this.voltage = this.current * this.resistance;
+                this.validate();
+            }
+            
+            updateResistance(newResistance) {
+                this.resistance = newResistance;
+                this.voltage = this.current * this.resistance;
+                this.validate();
+            }
+            
+            getPower() {
+                return this.voltage * this.current;
+            }
+        }
+
+        let circuit = new Circuit(12, 3, 4); // Default circuit
+
+        function updateUI() {
+            // Update visualization
+            document.getElementById('voltage-value').textContent = `${circuit.voltage}V`;
+            document.getElementById('current-value').textContent = `${circuit.current}A`;
+            document.getElementById('resistance-value').textContent = `${circuit.resistance}Ω`;
+            
+            // Update status panel
+            document.getElementById('status-voltage').textContent = `${circuit.voltage.toFixed(2)} V`;
+            document.getElementById('status-current').textContent = `${circuit.current.toFixed(2)} A`;
+            document.getElementById('status-resistance').textContent = `${circuit.resistance.toFixed(2)} Ω`;
+            document.getElementById('status-power').textContent = `${circuit.getPower().toFixed(2)} W`;
+            
+            // Animate circuit lines when values change
+            const lines = document.querySelectorAll('.circuit-line');
+            lines.forEach(line => {
+                line.style.animation = 'none';
+                line.offsetHeight; // Trigger reflow
+                line.style.animation = null;
+            });
+        }
+
+        document.getElementById('init-circuit').addEventListener('click', () => {
+            try {
+                const voltage = parseFloat(document.getElementById('init-voltage').value);
+                const current = parseFloat(document.getElementById('init-current').value);
+                const resistance = parseFloat(document.getElementById('init-resistance').value);
+                
+                const providedValues = [
+                    !isNaN(voltage) && voltage > 0,
+                    !isNaN(current) && current > 0,
+                    !isNaN(resistance) && resistance > 0
+                ].filter(Boolean).length;
+                
+                if (providedValues !== 2) {
+                    alert("Please provide exactly two positive values");
+                    return;
+                }
+                
+                const params = {};
+                if (!isNaN(voltage) && voltage > 0) params.voltage = voltage;
+                if (!isNaN(current) && current > 0) params.current = current;
+                if (!isNaN(resistance) && resistance > 0) params.resistance = resistance;
+                
+                circuit = new Circuit(params.voltage, params.current, params.resistance);
+                updateUI();
+                
+                // Show success animation
+                const button = document.getElementById('init-circuit');
+                button.classList.add('bg-green-600');
+                setTimeout(() => {
+                    button.classList.remove('bg-green-600');
+                    button.classList.add('bg-electric-purple');
+                }, 1000);
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        document.getElementById('update-circuit').addEventListener('click', () => {
+            try {
+                const param = document.getElementById('modify-param').value;
+                const newValue = parseFloat(document.getElementById('new-value').value);
+                
+                if (isNaN(newValue) || newValue <= 0) {
+                    alert("Please enter a valid positive number");
+                    return;
+                }
+                
+                switch (param) {
+                    case 'voltage':
+                        circuit.updateVoltage(newValue);
+                        break;
+                    case 'current':
+                        circuit.updateCurrent(newValue);
+                        break;
+                    case 'resistance':
+                        circuit.updateResistance(newValue);
+                        break;
+                }
+                
+                updateUI();
+                
+                // Show success animation
+                const button = document.getElementById('update-circuit');
+                button.classList.add('bg-green-600');
+                setTimeout(() => {
+                    button.classList.remove('bg-green-600');
+                    button.classList.add('bg-electric-pink');
+                }, 1000);
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Initialize UI
+        updateUI();
+    </script>
 </body>
 </html>
