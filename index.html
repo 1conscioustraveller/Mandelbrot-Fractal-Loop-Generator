@@ -2,52 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Neon Glow Animation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Futuristic Sine Wave Animation</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-black flex items-center justify-center min-h-screen">
-  <div class="text-center p-8 rounded-lg shadow-lg bg-gradient-to-r from-purple-900 via-pink-900 to-blue-900 animate-pulse">
-    <h1 class="text-4xl font-bold mb-4 text-neon">Vibrant Neon Animation</h1>
-    <div class="border-8 border-dashed border-gradient neon-glow p-4 rounded-lg inline-block">
-      <!-- Replace 'neon_glow_animation.mov' with your downloaded file path -->
-      <video controls autoplay loop class="w-96 h-auto rounded-lg shadow-lg" poster="poster.png" style="background: transparent;">
-        <source src="neon_glow_animation.mov" type="video/quicktime" />
-        Your browser does not support the video tag.
-      </video>
-    </div>
-    <p class="mt-4 text-neon font-semibold">Download your neon animation for use in video editors!</p>
-  </div>
-
   <style>
-    /* Custom neon glow effect */
-    @keyframes neon {
-      0%, 100% { text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de, 0 0 30px #ff00de, 0 0 40px #ff00de; }
-      50% { text-shadow: 0 0 20px #ff00de, 0 0 30px #ff00de, 0 0 40px #ff00de, 0 0 50px #ff00de; }
+    /* Create a smooth animated wave using CSS variables and keyframes */
+    @keyframes wave {
+      0% { --phase: 0deg; }
+      100% { --phase: 360deg; }
     }
 
-    .text-neon {
-      color: #ff00de;
-      animation: neon 1.5s infinite alternate;
-    }
-
-    /* Neon glow for borders and other elements */
-    .border-gradient {
-      background: linear-gradient(45deg, #ff00de, #00ffe8, #fffa00);
-      background-size: 600% 600%;
-      animation: gradient 3s ease infinite;
-    }
-
-    @keyframes gradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* Extra glow effect on video border */
-    .neon-glow {
-      box-shadow: 0 0 20px #ff00de, 0 0 40px #ff00de inset;
+    .wave {
+      --phase: 0deg;
+      animation: wave 5s linear infinite;
     }
   </style>
+</head>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen font-sans text-white">
+  <div class="relative w-full max-w-4xl p-8 bg-gray-800 bg-opacity-70 rounded-xl shadow-lg backdrop-blur-lg">
+    <h1 class="text-3xl font-bold mb-4 text-center tracking-widest">Futuristic Wave</h1>
+    <canvas id="waveCanvas" class="w-full h-64"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('waveCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Resize canvas to fit container
+    function resize() {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let startTime = null;
+    const duration = 5000; // 5 seconds
+
+    function draw(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+
+      // Loop the animation every 5 seconds
+      const progress = (elapsed % duration) / duration; // 0 to 1
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'hsl(200, 80%, 60%)';
+
+      ctx.beginPath();
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      for (let x = 0; x <= width; x++) {
+        const t = (x / width) * 4 * Math.PI; // 2 cycles across the width
+        const phase = progress * 2 * Math.PI; // Animate phase over 5 seconds
+        const y = Math.sin(t + phase) * 0.4 + 0.5; // normalized between 0 and 1
+        const yPos = y * height;
+        if (x === 0) {
+          ctx.moveTo(x, yPos);
+        } else {
+          ctx.lineTo(x, yPos);
+        }
+      }
+
+      ctx.stroke();
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+  </script>
 </body>
 </html>
