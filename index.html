@@ -1,278 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Ohm's Law Interactive Circuit</title>
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PyScript (2024 API) -->
-  <link rel="stylesheet" href="https://pyscript.net/releases/2024.7.1/core.css" />
-  <script type="module" src="https://pyscript.net/releases/2024.7.1/core.js"></script>
+    <title>Turtle Colorful Pattern</title>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.10/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.10/brython_stdlib.js"></script>
 </head>
-<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col items-center justify-center p-6">
+<body onload="brython()">
+    <canvas id="turtlecanvas" width="800" height="800"></canvas>
+    <script type="text/python">
+from browser import document, window
+import colorsys
+import math
 
-  <div class="max-w-3xl w-full">
-    <h1 class="text-3xl font-bold mb-6 text-cyan-400 text-center">⚡ Ohm's Law Visualizer ⚡</h1>
+# Set up Turtle-like environment using Brython
+turtle = window.Turtle.new(document["turtlecanvas"])
+turtle.speed(0)
+turtle.bgcolor("black")
+h = 0
 
-    <!-- Controls -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
-        <div class="space-y-4">
-          <div>
-            <label for="mode-select" class="block mb-2 text-lg">Solve for:</label>
-            <select id="mode-select" class="bg-gray-700 text-white rounded px-4 py-2 w-full border border-gray-600 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400">
-              <option value="Solve I">Current (I = V/R)</option>
-              <option value="Solve V">Voltage (V = I×R)</option>
-              <option value="Solve R">Resistance (R = V/I)</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="slider-V" class="block mb-1">Voltage (V): <span id="value-V" class="text-green-400">9.0</span> V</label>
-            <input id="slider-V" type="range" min="0" max="24" step="0.1" value="9" class="w-full accent-green-400" />
-          </div>
-
-          <div>
-            <label for="slider-I" class="block mb-1">Current (I): <span id="value-I" class="text-cyan-400">0.09</span> A</label>
-            <input id="slider-I" type="range" min="0" max="2" step="0.01" value="0.09" class="w-full accent-cyan-400" />
-          </div>
-
-          <div>
-            <label for="slider-R" class="block mb-1">Resistance (R): <span id="value-R" class="text-yellow-400">100</span> Ω</label>
-            <input id="slider-R" type="range" min="1" max="1000" step="1" value="100" class="w-full accent-yellow-400" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Circuit display -->
-      <div class="bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col">
-        <div class="flex-grow flex items-center justify-center">
-          <img id="circuit-img" class="max-w-full h-auto" />
-        </div>
-        <div id="power-display" class="text-lg font-semibold text-pink-400 text-center mt-2"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PyScript config -->
-  <py-config>
-    packages = ["matplotlib", "numpy"]
-  </py-config>
-
-  <!-- PyScript logic -->
-  <py-script>
-from js import document, console
-import io, base64, math
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Configuration
-CIRCUIT_WIDTH = 8  # Total width of the circuit diagram
-BATTERY_WIDTH = 1.2  # Width of the battery symbol
-RESISTOR_WIDTH = 2.0  # Width of the resistor symbol
-WIRE_HEIGHT = 1.5  # Height of the top/bottom wires
-
-# Persistent figure & axes
-fig, ax = plt.subplots(figsize=(8, 5))
-fig.patch.set_facecolor("#111827")  # Match Tailwind's gray-900
-ax.set_facecolor("#111827")
-
-# Globals
-mode = "Solve I"
-V = 9.0
-I = 0.09
-R = 100.0
-
-def get_value(id):
-    element = document.getElementById(id)
-    return float(element.value) if element else 0.0
-
-def get_select_value(id):
-    element = document.getElementById(id)
-    return element.value if element else "Solve I"
-
-def set_image(id, data_url):
-    element = document.getElementById(id)
-    if element:
-        element.src = data_url
-
-def set_text(id, text):
-    element = document.getElementById(id)
-    if element:
-        element.innerText = text
-
-def set_value_display(id, value):
-    element = document.getElementById(f"value-{id.split('-')[-1]}")
-    if element:
-        element.innerText = str(value)
-
-def draw_battery(ax, x, y, width, height):
-    """Draw a battery symbol at (x,y) with given width and height"""
-    # Battery body
-    ax.plot([x, x + width], [y, y], color="white", linewidth=2)
-    ax.plot([x, x + width], [y + height, y + height], color="white", linewidth=2)
-    ax.plot([x, x], [y, y + height], color="white", linewidth=2)
-    
-    # Positive terminal
-    terminal_width = width * 0.15
-    ax.plot([x + width, x + width + terminal_width], 
-            [y + height*0.25, y + height*0.25], 
-            color="white", linewidth=2)
-    ax.plot([x + width, x + width + terminal_width], 
-            [y + height*0.75, y + height*0.75], 
-            color="white", linewidth=2)
-
-def draw_resistor(ax, x, y, width, height, zigzags=6):
-    """Draw a resistor symbol at (x,y) with given width and height"""
-    # Create zigzag pattern
-    x_points = np.linspace(x, x + width, zigzags * 2 + 1)
-    y_points = [y + height * (0.5 + (0.5 if i % 2 == 0 else -0.5)) 
-                for i in range(zigzags * 2 + 1)]
-    
-    # Draw the resistor
-    ax.plot(x_points, y_points, color="white", linewidth=2)
-    
-    # Add connecting lines
-    ax.plot([x - width*0.2, x], [y + height*0.5, y + height*0.5], 
-            color="white", linewidth=2)
-    ax.plot([x + width, x + width*1.2], [y + height*0.5, y + height*0.5], 
-            color="white", linewidth=2)
-
-def format_val(val, unit):
-    """Format values with appropriate precision and units"""
-    if val is None or (isinstance(val, float) and (math.isnan(val) or math.isinf(val))):
-        return "—"
-    
-    # Determine precision based on magnitude
-    abs_val = abs(val)
-    if unit == "Ω" and abs_val >= 1000:
-        return f"{val/1000:.1f} kΩ"
-    elif unit == "A" and abs_val < 0.1:
-        return f"{val*1000:.1f} mA"
-    elif abs_val >= 100:
-        return f"{val:.0f} {unit}"
-    elif abs_val >= 10:
-        return f"{val:.1f} {unit}"
-    else:
-        return f"{val:.2f} {unit}"
-
-def render():
-    """Render the circuit diagram and update displays"""
-    # Clear the previous drawing
-    ax.cla()
-    ax.set_facecolor("#111827")
-    
-    # Calculate positions
-    left = -CIRCUIT_WIDTH/2
-    right = CIRCUIT_WIDTH/2
-    top = WIRE_HEIGHT/2
-    bottom = -WIRE_HEIGHT/2
-    
-    # Draw wires (rectangle)
-    ax.plot([left, right], [top, top], color="white", linewidth=2)
-    ax.plot([right, right], [top, bottom], color="white", linewidth=2)
-    ax.plot([left, right], [bottom, bottom], color="white", linewidth=2)
-    ax.plot([left, left], [bottom, top], color="white", linewidth=2)
-    
-    # Draw elements
-    battery_x = left + (right - left) * 0.2
-    resistor_x = left + (right - left) * 0.6
-    
-    draw_battery(ax, battery_x - BATTERY_WIDTH/2, bottom, BATTERY_WIDTH, WIRE_HEIGHT)
-    draw_resistor(ax, resistor_x - RESISTOR_WIDTH/2, 0, RESISTOR_WIDTH, WIRE_HEIGHT*0.6)
-    
-    # Draw current arrow (with dynamic width based on current)
-    arrow_lw = 1.0 + 4.0 * (0.0 if math.isnan(I) else min(1.0, abs(I)/2.0))
-    arrow_color = "cyan" if I >= 0 else "magenta"  # Different color for reverse current
-    
-    ax.annotate("", xy=(right - 0.5, top), xytext=(left + 0.5, top),
-                arrowprops=dict(arrowstyle="->", linewidth=arrow_lw, color=arrow_color))
-    
-    # Add labels
-    ax.text(battery_x, bottom - 0.7, f"V = {format_val(V, 'V')}", 
-            ha="center", va="top", color="green", fontsize=10)
-    ax.text(resistor_x, top + 0.4, f"I = {format_val(I, 'A')}", 
-            ha="center", va="bottom", color="cyan", fontsize=10)
-    ax.text(resistor_x, bottom - 0.7, f"R = {format_val(R, 'Ω')}", 
-            ha="center", va="top", color="yellow", fontsize=10)
-    
-    # Add equation based on mode
-    equations = {
-        "Solve I": r"$I = \dfrac{V}{R}$",
-        "Solve V": r"$V = I \times R$",
-        "Solve R": r"$R = \dfrac{V}{I}$"
-    }
-    ax.text(0, bottom - 1.2, equations.get(mode, ""), 
-            ha="center", va="top", color="white", fontsize=12)
-    
-    # Configure plot
-    ax.set_aspect("equal")
-    ax.set_xlim(left - 1.5, right + 1.5)
-    ax.set_ylim(bottom - 1.5, top + 0.5)
-    ax.axis("off")
-    
-    # Save as image
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight", facecolor="#111827", dpi=100)
-    buf.seek(0)
-    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
-    set_image("circuit-img", f"data:image/png;base64,{img_base64}")
-    
-    # Update power display
-    if not (math.isnan(V) or math.isnan(I)):
-        power = V * I
-        set_text("power-display", f"Power: {format_val(power, 'W')}")
-    else:
-        set_text("power-display", "Power: —")
-
-def update_plot(event=None):
-    """Update the plot based on current control values"""
-    global mode, V, I, R
-    
-    try:
-        # Get current values
-        mode = get_select_value("mode-select")
-        new_V = get_value("slider-V")
-        new_I = get_value("slider-I")
-        new_R = get_value("slider-R")
-        
-        # Update the variable we're solving for
-        if mode == "Solve I":
-            I = float('nan') if new_R <= 0 else new_V / new_R
-            V, R = new_V, new_R
-        elif mode == "Solve V":
-            V = new_I * new_R
-            I, R = new_I, new_R
-        elif mode == "Solve R":
-            R = float('nan') if new_I <= 0 else new_V / new_I
-            V, I = new_V, new_I
-        
-        # Update value displays
-        set_value_display("slider-V", round(V, 2))
-        set_value_display("slider-I", round(I, 4))
-        set_value_display("slider-R", round(R, 2))
-        
-        # Re-render
-        render()
-    except Exception as e:
-        console.error(f"Error in update_plot: {e}")
-
-# Initialize event listeners
-def setup_event_listeners():
-    try:
-        document.getElementById("slider-V").oninput = update_plot
-        document.getElementById("slider-I").oninput = update_plot
-        document.getElementById("slider-R").oninput = update_plot
-        document.getElementById("mode-select").onchange = update_plot
-        
-        # Initial render
-        update_plot()
-    except Exception as e:
-        console.error(f"Error setting up event listeners: {e}")
-
-# Run setup when PyScript is ready
-setup_event_listeners()
-  </py-script>
-
+for i in range(16):
+    for j in range(18):
+        # Convert HSV to RGB (colorsys returns 0-1, we need 0-255)
+        r, g, b = colorsys.hsv_to_rgb(h, 1, 1)
+        turtle.color(f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})")
+        h += 0.005
+        turtle.right(90)
+        turtle.circle(150 - j * 6, 90)
+        turtle.left(90)
+        turtle.circle(150 - j * 6, 90)
+        turtle.right(180)
+    turtle.circle(40, 24)
+    </script>
 </body>
 </html>
