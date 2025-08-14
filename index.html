@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Animated Flower with Opposing Petals</title>
+<title>Six-Petal Flower</title>
 <style>
   body {
     margin: 0;
@@ -12,6 +12,8 @@
   }
   canvas {
     display: block;
+    margin: auto;
+    background: black;
   }
 </style>
 </head>
@@ -21,89 +23,81 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-let width = window.innerWidth;
-let height = window.innerHeight;
-canvas.width = width;
-canvas.height = height;
+// Set canvas to window size
+canvas.width = Math.min(window.innerWidth, window.innerHeight);
+canvas.height = Math.min(window.innerWidth, window.innerHeight);
 
-const cx = width / 2;
-const cy = height / 2;
+// Center of the canvas
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
 
-const totalPetals = 12; // number of petals
-const petalLayers = 16; // layers per petal
-const maxGroups = totalPetals * petalLayers;
+let h = 0; // Hue value
 
-const groups = [];
-for (let p = 0; p < totalPetals; p++) {
-  for (let j = 0; j < petalLayers; j++) {
-    groups.push({petalIndex: p, layerIndex: j, revealed: false});
+const petals = 6; // Number of petals
+const layers = 12; // Number of layers for depth
+
+// Draw the flower
+function drawFlower() {
+  for (let layer = 0; layer < layers; layer++) {
+    const layerScale = 1 - (layer / layers * 0.7); // Scale decreases with layers
+    
+    for (let petal = 0; petal < petals; petal++) {
+      // Calculate angle for this petal
+      const angle = (petal / petals) * Math.PI * 2;
+      
+      // Set color with changing hue
+      ctx.strokeStyle = `hsl(${h * 360}, 100%, ${70 - layer * 3}%)`;
+      ctx.lineWidth = 2 + layer * 0.5;
+      h += 0.01;
+      
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      
+      // Draw the petal (two arcs)
+      const radius = 100 * layerScale;
+      
+      // First arc of petal
+      ctx.beginPath();
+      ctx.arc(0, 50 * layerScale, radius * 0.6, Math.PI * 0.2, Math.PI * 0.8);
+      ctx.stroke();
+      
+      // Second arc of petal (mirrored)
+      ctx.beginPath();
+      ctx.arc(0, -50 * layerScale, radius * 0.6, -Math.PI * 0.8, -Math.PI * 0.2);
+      ctx.stroke();
+      
+      ctx.restore();
+    }
   }
-}
-
-let currentGroup = 0;
-
-// Function to convert HSV to RGB (for vibrant colors)
-function hueColor(h) {
-  return `hsl(${h}, 100%, 50%)`;
-}
-
-// Draw a petal layer with opposing arcs
-function drawPetal(petalIdx, layerIdx, color) {
-  const angle = (2 * Math.PI / totalPetals) * petalIdx;
-  const radius = 50 + layerIdx * 6; // increasing radius per layer
+  
+  // Draw the flower center
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(angle);
-  
-  // Draw two opposing arcs to form a petal
-  ctx.strokeStyle = color;
-  
-  // First arc (clockwise)
+  ctx.fillStyle = `hsl(${h * 360}, 100%, 50%)`;
   ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, Math.PI / 4);
-  ctx.stroke();
-  
-  // Opposing arc (counter-clockwise)
-  ctx.beginPath();
-  ctx.arc(0, 0, radius, Math.PI / 4, Math.PI / 2);
-  ctx.stroke();
-
+  ctx.arc(0, 0, 20, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
-// Animation function
+// Animation loop
 function animate() {
-  if (currentGroup >= groups.length) {
-    clearInterval(animId);
-    return;
-  }
-  
-  // Reveal next group
-  groups[currentGroup].revealed = true;
-  currentGroup++;
-  
-  // Clear background
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, width, height);
-  
-  // Draw all revealed groups
-  for (let g of groups) {
-    if (g.revealed) {
-      const hue = (g.petalIndex / totalPetals) * 360;
-      const color = hueColor(hue);
-      drawPetal(g.petalIndex, g.layerIndex, color);
-    }
-  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawFlower();
+  h += 0.002; // Slowly change hue
+  requestAnimationFrame(animate);
 }
 
-// Start the animation
-const animId = setInterval(animate, 50);
+// Start animation
+animate();
 
-window.addEventListener('resize', () => {
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvas.width = width;
-  canvas.height = height;
+// Handle window resize
+window.addEventListener('resize', function() {
+  canvas.width = Math.min(window.innerWidth, window.innerHeight);
+  canvas.height = Math.min(window.innerWidth, window.innerHeight);
+  cx = canvas.width / 2;
+  cy = canvas.height / 2;
 });
 </script>
 </body>
