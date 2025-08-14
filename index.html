@@ -3,78 +3,142 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Futuristic Sine Wave Animation</title>
+  <title>Ohm's Law Circuit Visualization</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Create a smooth animated wave using CSS variables and keyframes */
-    @keyframes wave {
-      0% { --phase: 0deg; }
-      100% { --phase: 360deg; }
-    }
-
-    .wave {
-      --phase: 0deg;
-      animation: wave 5s linear infinite;
-    }
-  </style>
+  <!-- Plotly.js CDN -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body class="bg-gray-900 flex items-center justify-center min-h-screen font-sans text-white">
-  <div class="relative w-full max-w-4xl p-8 bg-gray-800 bg-opacity-70 rounded-xl shadow-lg backdrop-blur-lg">
-    <h1 class="text-3xl font-bold mb-4 text-center tracking-widest">Futuristic Wave</h1>
-    <canvas id="waveCanvas" class="w-full h-64"></canvas>
+<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col items-center p-6">
+
+  <header class="mb-8 text-center">
+    <h1 class="text-4xl font-bold tracking-widest text-cyan-400 mb-2">⚡️ Futuristic Circuit Visualizer</h1>
+    <p class="text-lg text-gray-400">Explore Ohm's Law with interactive controls</p>
+  </header>
+
+  <!-- Circuit Diagram Container -->
+  <div class="w-full max-w-3xl bg-gray-800 rounded-xl shadow-xl p-4 mb-8">
+    <div id="circuit" class="h-64"></div>
   </div>
 
+  <!-- Sliders Panel -->
+  <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    <!-- Voltage Slider -->
+    <div class="flex flex-col items-center bg-gray-800 p-4 rounded-xl shadow-lg hover:scale-105 transform transition duration-300">
+      <label class="mb-2 text-cyan-300 font-semibold" for="voltage">Voltage (V)</label>
+      <input type="range" id="voltage" min="0" max="20" step="0.1" value="12" class="w-full accent-cyan-400"/>
+      <span class="mt-2 text-xl font-mono" id="voltage-value">12.0 V</span>
+    </div>
+    <!-- Resistance Slider -->
+    <div class="flex flex-col items-center bg-gray-800 p-4 rounded-xl shadow-lg hover:scale-105 transform transition duration-300">
+      <label class="mb-2 text-cyan-300 font-semibold" for="resistance">Resistance (Ω)</label>
+      <input type="range" id="resistance" min="0.1" max="20" step="0.1" value="4" class="w-full accent-cyan-400"/>
+      <span class="mt-2 text-xl font-mono" id="resistance-value">4.0 Ω</span>
+    </div>
+    <!-- Current Slider -->
+    <div class="flex flex-col items-center bg-gray-800 p-4 rounded-xl shadow-lg hover:scale-105 transform transition duration-300">
+      <label class="mb-2 text-cyan-300 font-semibold" for="current">Current (A)</label>
+      <input type="range" id="current" min="0" max="10" step="0.01" value="3" class="w-full accent-cyan-400"/>
+      <span class="mt-2 text-xl font-mono" id="current-value">3.00 A</span>
+    </div>
+  </div>
+
+  <!-- Optional Footer -->
+  <footer class="mt-auto text-gray-500 text-sm text-center">
+    &copy; 2023 AI Circuit Visualizer
+  </footer>
+
   <script>
-    const canvas = document.getElementById('waveCanvas');
-    const ctx = canvas.getContext('2d');
+    // Initial values
+    let V = parseFloat(document.getElementById('voltage').value);
+    let R = parseFloat(document.getElementById('resistance').value);
+    let I = parseFloat(document.getElementById('current').value);
 
-    // Resize canvas to fit container
-    function resize() {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
+    const voltageSlider = document.getElementById('voltage');
+    const resistanceSlider = document.getElementById('resistance');
+    const currentSlider = document.getElementById('current');
 
-    let startTime = null;
-    const duration = 5000; // 5 seconds
+    const voltageValue = document.getElementById('voltage-value');
+    const resistanceValue = document.getElementById('resistance-value');
+    const currentValue = document.getElementById('current-value');
 
-    function draw(timestamp) {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-
-      // Loop the animation every 5 seconds
-      const progress = (elapsed % duration) / duration; // 0 to 1
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = 'hsl(200, 80%, 60%)';
-
-      ctx.beginPath();
-
-      const width = canvas.width;
-      const height = canvas.height;
-
-      for (let x = 0; x <= width; x++) {
-        const t = (x / width) * 4 * Math.PI; // 2 cycles across the width
-        const phase = progress * 2 * Math.PI; // Animate phase over 5 seconds
-        const y = Math.sin(t + phase) * 0.4 + 0.5; // normalized between 0 and 1
-        const yPos = y * height;
-        if (x === 0) {
-          ctx.moveTo(x, yPos);
-        } else {
-          ctx.lineTo(x, yPos);
+    // Function to generate circuit diagram data (simplified)
+    function getCircuitData(V, I, R) {
+      return [
+        {
+          type: 'scatter',
+          mode: 'lines+markers',
+          x: [1, 1, 3, 4, 5, 5, 1],
+          y: [2, 3, 2, 2, 2, 3, 2],
+          fill: 'toself',
+          fillcolor: 'rgba(56, 189, 248, 0.2)', // Tailwind cyan-400 with transparency
+          line: {color: 'cyan'},
+          showlegend: false,
         }
-      }
-
-      ctx.stroke();
-
-      requestAnimationFrame(draw);
+      ];
     }
 
-    requestAnimationFrame(draw);
+    // Function to update plot
+    function plotCircuit(V, I, R) {
+      const data = getCircuitData(V, I, R);
+      const layout = {
+        margin: { t: 30, b: 30, l: 30, r: 30 },
+        title: {
+          text: `🔋 Ohm's Law Circuit`,
+          font: { color: 'cyan', size: 20, family: 'Orbitron, sans-serif' },
+          xref: 'paper',
+          x: 0.5,
+        },
+        annotations: [
+          { text: `V = ${V.toFixed(1)} V`, x: 0.2, y: 1.1, showarrow: false, font: { color: 'cyan' } },
+          { text: `R = ${R.toFixed(1)} Ω`, x: 0.2, y: 1.0, showarrow: false, font: { color: 'cyan' } },
+          { text: `I = ${I.toFixed(2)} A`, x: 0.2, y: 0.9, showarrow: false, font: { color: 'cyan' } },
+        ],
+        xaxis: { visible: false },
+        yaxis: { visible: false },
+        paper_bgcolor: '#1f2937', // Tailwind gray-800
+        plot_bgcolor: '#1f2937',
+      };
+      Plotly.newPlot('circuit', data, layout, {responsive: true});
+    }
+
+    // Initial plot
+    plotCircuit(V, I, R);
+
+    // Update function
+    function updateValues() {
+      V = parseFloat(voltageSlider.value);
+      R = parseFloat(resistanceSlider.value);
+      I = parseFloat(currentSlider.value);
+
+      // Update display values
+      voltageValue.textContent = `${V.toFixed(1)} V`;
+      resistanceValue.textContent = `${R.toFixed(1)} Ω`;
+      currentValue.textContent = `${I.toFixed(2)} A`;
+
+      // Calculate current based on V and R if sliders are changed independently
+      // Here, sliders are linked, so we recalculate I from V/R
+      I = V / R;
+      currentSlider.value = I;
+      currentValue.textContent = `${I.toFixed(2)} A`;
+
+      plotCircuit(V, I, R);
+    }
+
+    // Event listeners
+    voltageSlider.addEventListener('input', () => {
+      updateValues();
+    });
+    resistanceSlider.addEventListener('input', () => {
+      updateValues();
+    });
+    currentSlider.addEventListener('input', () => {
+      // When current is manually adjusted, update V
+      I = parseFloat(currentSlider.value);
+      V = I * R;
+      voltageSlider.value = V;
+      updateValues();
+    });
   </script>
 </body>
 </html>
