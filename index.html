@@ -1,132 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Mandelbrot Generator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @keyframes pulse-glow {
-            0%, 100% { filter: drop-shadow(0 0 5px currentColor); }
-            50% { filter: drop-shadow(0 0 20px currentColor); }
-        }
-        @keyframes vibrate {
-            0% { color: #ff00ff; }
-            25% { color: #00ffff; }
-            50% { color: #ffff00; }
-            75% { color: #ff00ff; }
-            100% { color: #00ffff; }
-        }
-        .neon-text {
-            animation: vibrate 5s infinite, pulse-glow 3s infinite;
-        }
-        .neon-border {
-            border: 2px solid;
-            animation: pulse-glow 4s infinite alternate;
-        }
-        canvas {
-            image-rendering: -moz-crisp-edges;
-            image-rendering: -webkit-crisp-edges;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Neon Mandelbrot (Simple, Loads on Page Open)</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0b0b0f;
+      color: #e8e8ff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    header {
+      text-align: center;
+      padding: 12px 8px;
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+    #wrap {
+      display: grid;
+      place-items: center;
+      height: calc(100% - 56px);
+    }
+    canvas {
+      background: black;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.6), 0 0 40px rgba(128,0,255,.25) inset;
+      max-width: 95vw;
+      max-height: calc(95vh - 56px);
+    }
+    .hint {
+      position: fixed;
+      left: 12px; bottom: 10px;
+      opacity: .7; font-size: 12px;
+    }
+  </style>
 </head>
-<body class="bg-black text-white min-h-screen flex flex-col">
-    <!-- [Previous HTML structure remains exactly the same] -->
-    
-    <script>
-        // [Previous loadSettings(), saveSettings(), updateSliderValues() remain the same]
+<body>
+  <header>NEON MANDELBROT — static render (no animation)</header>
+  <div id="wrap">
+    <canvas id="fractalCanvas" width="1280" height="800"></canvas>
+  </div>
+  <div class="hint">If you see a blank page, open DevTools → Console to check for errors.</div>
 
-        // Initialize canvas and context
-        const canvas = document.getElementById('fractalCanvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            console.error("Failed to get canvas context!");
-            document.getElementById('status').textContent = "Error: Canvas not supported";
-        }
+  <script>
+    'use strict';
 
-        // Set canvas size with debug checks
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            canvas.width = Math.max(100, container.clientWidth - 40);
-            canvas.height = Math.max(100, Math.min(canvas.width * 0.75, window.innerHeight - 300));
-            console.log("Canvas resized to:", canvas.width, "x", canvas.height);
-        }
+    // ====== Color palettes that return integer [r,g,b] ======
+    const palettes = {
+      magma(t) {
+        const r = Math.min(255, 250 + Math.sin(t * 10) * 5);
+        const g = Math.min(255, 100 + Math.sin(t * 15) * 30);
+        const b = Math.min(255, 120 + Math.sin(t * 20) * 40);
+        return [r|0, g|0, b|0];
+      },
+      plasma(t) {
+        const r = Math.min(255, 200 + Math.sin(t * 15) * 55);
+        const g = Math.min(255,  50 + Math.sin(t * 10) * 50);
+        const b = Math.min(255, 150 + Math.sin(t * 20) * 105);
+        return [r|0, g|0, b|0];
+      },
+      inferno(t) {
+        const r = Math.min(255, 220 + Math.sin(t * 12) * 35);
+        const g = Math.min(255, 100 + Math.sin(t * 18) * 50);
+        const b = Math.min(255,  30 + Math.sin(t * 25) * 30);
+        return [r|0, g|0, b|0];
+      },
+      viridis(t) {
+        const r = Math.min(255,  50 + Math.sin(t * 15) * 50);
+        const g = Math.min(255, 150 + Math.sin(t * 20) * 50);
+        const b = Math.min(255, 180 + Math.sin(t * 25) * 50);
+        return [r|0, g|0, b|0];
+      },
+      rainbow(t) {
+        const r = Math.sin(t * 6.28318530718) * 127 + 128;
+        const g = Math.sin(t * 6.28318530718 + 2) * 127 + 128;
+        const b = Math.sin(t * 6.28318530718 + 4) * 127 + 128;
+        return [r|0, g|0, b|0];
+      },
+      // Fixed syntax: all parentheses present
+      electric(t) {
+        const r = Math.abs(Math.sin(t * 6.0)) * 255;
+        const g = Math.abs(Math.sin(t * 6.0 + Math.PI/3)) * 255;
+        const b = Math.abs(Math.sin(t * 6.0 + 2*Math.PI/3)) * 255;
+        return [r|0, g|0, b|0];
+      }
+    };
 
-        // Revised Color Palettes with Safeguards
-        const colorPalettes = {
-            magma: (t) => {
-                const r = Math.min(255, 250 + Math.sin(t * 10) * 5);
-                const g = Math.min(255, 100 + Math.sin(t * 15) * 30);
-                const b = Math.min(255, 120 + Math.sin(t * 20) * 40);
-                return `rgb(${r},${g},${b})`;
-            },
-            // [Other palettes remain similar...]
-            electric: (t) => {
-                const r = Math.floor(Math.abs(Math.sin(t * 0.05)) * 255);
-                const g = Math.floor(Math.abs(Math.sin(t * 0.05 + Math.PI/3)) * 255);
-                const b = Math.floor(Math.abs(Math.sin(t * 0.05 + 2*Math.PI/3)) * 255);
-                return `rgb(${r},${g},${b})`;
-            }
-        };
+    // ====== Canvas sizing (crisp on HiDPI) ======
+    const canvas = document.getElementById('fractalCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        // Robust RGB Parser
-        function parseRGB(color) {
-            if (!color.startsWith('rgb(')) return [255, 0, 255]; // Fallback: magenta
-            try {
-                const parts = color.slice(4, -1).split(',').map(s => parseInt(s.trim()));
-                return parts.length === 3 ? parts : [255, 0, 255];
-            } catch {
-                return [255, 0, 255];
-            }
-        }
+    function fitCanvasToScreen() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const maxCSSWidth = Math.min(1280, Math.floor(window.innerWidth * 0.95));
+      const maxCSSHeight = Math.min(800, Math.floor((window.innerHeight - 56) * 0.95));
 
-        // Revised Mandelbrot Drawing
-        function drawMandelbrot(xmin = -2.5, xmax = 1, ymin = -1.1, ymax = 1.1, maxIter = 100) {
-            if (!ctx) return;
-            
-            const width = canvas.width;
-            const height = canvas.height;
-            const imageData = ctx.createImageData(width, height);
-            const data = imageData.data;
-            const getColor = colorPalettes[document.getElementById('colorScheme').value] || colorPalettes.magma;
-            
-            for (let x = 0; x < width; x++) {
-                for (let y = 0; y < height; y++) {
-                    const cx = xmin + (xmax - xmin) * x / width;
-                    const cy = ymin + (ymax - ymin) * y / height;
-                    
-                    const iter = mandelbrot({ x: cx, y: cy }, maxIter);
-                    const idx = (y * width + x) * 4;
-                    
-                    if (iter === maxIter) {
-                        data.set([0, 0, 0, 255], idx); // Black for set
-                    } else {
-                        const [r, g, b] = parseRGB(getColor(iter));
-                        data.set([r, g, b, 255], idx);
-                    }
-                }
-            }
-            ctx.putImageData(imageData, 0, 0);
-        }
+      // Keep ~16:10 aspect like the original
+      const targetAspect = 16 / 10;
+      let cssW = maxCSSWidth, cssH = Math.floor(cssW / targetAspect);
+      if (cssH > maxCSSHeight) {
+        cssH = maxCSSHeight;
+        cssW = Math.floor(cssH * targetAspect);
+      }
 
-        // [Rest of your original JavaScript (mandelbrot(), previewAnimation(), etc.) 
-        // remains the same, but uses the new parseRGB() function]
+      canvas.style.width = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+      canvas.width = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+    }
 
-        // Enhanced initialization
-        document.addEventListener('DOMContentLoaded', () => {
-            resizeCanvas();
-            loadSettings();
-            
-            // Double-check canvas is ready
-            setTimeout(() => {
-                console.log("Initial draw starting...");
-                drawMandelbrot();
-            }, 100);
-            
-            // [Rest of your original event listeners]
-        });
-    </script>
-</body>
-</html>
+    // ====== Mandelbrot core ======
+    function drawMandelbrot({
+      palette = 'electric',
+      maxIter = 250,
+      centerX = -0.75,
+      centerY = 0.0,
+      viewWidth = 3.5 // horizontal width in complex plane
+    } = {}) {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Maintain aspect ratio vertically
+      const aspect = height / width;
+      const halfW = viewWidth / 2;
+      const halfH = halfW * aspect;
+      const xmin = centerX - halfW;
+      const xmax = centerX + halfW;
+      const ymin = centerY - halfH;
+      const ymax = centerY + halfH;
+
+      const img = ctx.createImageData(width, height);
+      const data = img.data;
+      const getColor = palettes[palette] || palettes.electric;
+
+      for (let py = 0; py < height; py++) {
+        const cy = ymin + (ymax - ymin) * (py / (height - 1));
+        for (let px = 0; px < width; px++) {
+          const cx = xmin + (xmax - xmin) * (px / (width - 1));
+
+          // Iterate z <- z^2 + c
+          let x = 0, y = 0, iter = 0;
+          let x2 = 0, y2 = 0;
