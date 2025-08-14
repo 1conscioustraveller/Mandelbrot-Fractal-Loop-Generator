@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Animated Flower Pattern</title>
+<title>Animated Flower with Opposing Petals</title>
 <style>
   body {
     margin: 0;
@@ -26,88 +26,78 @@ let height = window.innerHeight;
 canvas.width = width;
 canvas.height = height;
 
-// Center of the canvas
 const cx = width / 2;
 const cy = height / 2;
 
-// Parameters for animation
-const totalOuterLoops = 16;
-const innerLoops = 18;
-const maxGroups = totalOuterLoops * innerLoops;
-let currentGroup = 0;
+const totalPetals = 12; // number of petals
+const petalLayers = 16; // layers per petal
+const maxGroups = totalPetals * petalLayers;
 
-// Store all groups for animation
 const groups = [];
-
-// Initialize groups data
-for (let i = 0; i < totalOuterLoops; i++) {
-  for (let j = 0; j < innerLoops; j++) {
-    groups.push({outerIndex: i, innerIndex: j, shown: false});
+for (let p = 0; p < totalPetals; p++) {
+  for (let j = 0; j < petalLayers; j++) {
+    groups.push({petalIndex: p, layerIndex: j, revealed: false});
   }
 }
 
-function hsvToRgb(h, s, v) {
-  // Convert HSV to RGB
-  let f = (n, k = (n + h * 6) ) => (k % 6) < 1 ? v - v * s * Math.min(k, 1 - k) : v;
-  const r = Math.round(f(5) * 255);
-  const g = Math.round(f(0) * 255);
-  const b = Math.round(f(1) * 255);
-  return `rgb(${r}, ${g}, ${b})`;
+let currentGroup = 0;
+
+// Function to convert HSV to RGB (for vibrant colors)
+function hueColor(h) {
+  return `hsl(${h}, 100%, 50%)`;
 }
 
-// Animation control
-let animationInterval = null;
-
-function drawGroup(group) {
-  const i = group.outerIndex;
-  const j = group.innerIndex;
-  const h = (i * innerLoops + j) * 0.005;
-  const hue = h * 360;
-  ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
-  
+// Draw a petal layer with opposing arcs
+function drawPetal(petalIdx, layerIdx, color) {
+  const angle = (2 * Math.PI / totalPetals) * petalIdx;
+  const radius = 50 + layerIdx * 6; // increasing radius per layer
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(Math.PI / 2); // 90 degrees
-
-  const radius = 150 - j * 6;
-
-  // Draw arc in one direction
+  ctx.rotate(angle);
+  
+  // Draw two opposing arcs to form a petal
+  ctx.strokeStyle = color;
+  
+  // First arc (clockwise)
   ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, Math.PI / 2);
+  ctx.arc(0, 0, radius, 0, Math.PI / 4);
   ctx.stroke();
-
-  // Draw arc in opposing direction
+  
+  // Opposing arc (counter-clockwise)
   ctx.beginPath();
-  ctx.arc(0, 0, radius, Math.PI / 2, Math.PI);
+  ctx.arc(0, 0, radius, Math.PI / 4, Math.PI / 2);
   ctx.stroke();
 
   ctx.restore();
 }
 
+// Animation function
 function animate() {
   if (currentGroup >= groups.length) {
-    clearInterval(animationInterval);
+    clearInterval(animId);
     return;
   }
-
-  // Show next group
-  groups[currentGroup].shown = true;
+  
+  // Reveal next group
+  groups[currentGroup].revealed = true;
   currentGroup++;
-
+  
   // Clear background
   ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, width, height);
-
-  // Draw all shown groups
+  
+  // Draw all revealed groups
   for (let g of groups) {
-    if (g.shown) {
-      drawGroup(g);
+    if (g.revealed) {
+      const hue = (g.petalIndex / totalPetals) * 360;
+      const color = hueColor(hue);
+      drawPetal(g.petalIndex, g.layerIndex, color);
     }
   }
 }
 
-// Start animation: reveal groups gradually
-animationInterval = setInterval(animate, 50);
+// Start the animation
+const animId = setInterval(animate, 50);
 
 window.addEventListener('resize', () => {
   width = window.innerWidth;
