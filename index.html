@@ -1,138 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Mandelbrot Diagnostic</title>
-    <style>
-        body {
-            margin: 0;
-            background: #222;
-            color: white;
-            font-family: monospace;
-        }
-        #diagnostics {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border: 1px solid red;
-            z-index: 100;
-        }
-        canvas {
-            display: block;
-            border: 2px solid lime;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Neon Transition</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .neon-glow {
+      box-shadow: 0 0 20px #39ff20, 0 0 40px #39ff20, 0 0 60px #39ff20;
+      animation: pulse 2s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px #39ff20, 0 0 20px #39ff20, 0 0 30px #39ff20; }
+      100% { box-shadow: 0 0 30px #39ff20, 0 0 60px #39ff20, 0 0 90px #39ff20; }
+    }
+  </style>
 </head>
-<body>
-    <div id="diagnostics">Running tests...</div>
-    <canvas id="testCanvas"></canvas>
-
-    <script>
-        // ===== TEST 1: Canvas Setup =====
-        const canvas = document.getElementById('testCanvas');
-        const ctx = canvas.getContext('2d');
-        const diagnostics = document.getElementById('diagnostics');
-        
-        let testResults = [];
-        
-        function logTest(name, passed) {
-            testResults.push(`${passed ? '✅' : '❌'} ${name}`);
-            diagnostics.innerHTML = testResults.join('<br>');
-        }
-
-        // Test 1.1: Canvas element exists
-        if (!canvas) {
-            logTest('Canvas element exists', false);
-            throw new Error("Canvas element not found!");
-        } else {
-            logTest('Canvas element exists', true);
-        }
-
-        // Test 1.2: Canvas context available
-        if (!ctx) {
-            logTest('2D context available', false);
-            throw new Error("Canvas 2D context not supported!");
-        } else {
-            logTest('2D context available', true);
-        }
-
-        // ===== TEST 2: Canvas Rendering =====
-        canvas.width = 300;
-        canvas.height = 200;
-        
-        // Test 2.1: Basic drawing
-        ctx.fillStyle = 'rgb(255, 0, 0)';
-        ctx.fillRect(10, 10, 50, 50);
-        logTest('Basic rectangle drawing', true);
-
-        // ===== TEST 3: Mandelbrot Math =====
-        function testMandelbrotMath() {
-            try {
-                // Test point inside the set (should return max iterations)
-                const inside = mandelbrot({x:0,y:0}, 100);
-                // Test point outside the set (should return < max iterations)
-                const outside = mandelbrot({x:1,y:1}, 100);
-                
-                return inside === 100 && outside < 100;
-            } catch (e) {
-                console.error("Math test failed:", e);
-                return false;
-            }
-        }
-
-        function mandelbrot(c, maxIter) {
-            let z = { x: 0, y: 0 };
-            let iter = 0;
-            while (z.x * z.x + z.y * z.y <= 4 && iter < maxIter) {
-                const tmp = z.x * z.x - z.y * z.y + c.x;
-                z.y = 2 * z.x * z.y + c.y;
-                z.x = tmp;
-                iter++;
-            }
-            return iter;
-        }
-        
-        logTest('Mandelbrot math works', testMandelbrotMath());
-
-        // ===== TEST 4: Full Render =====
-        function drawMandelbrot() {
-            const width = canvas.width;
-            const height = canvas.height;
-            const imageData = ctx.createImageData(width, height);
-            const data = imageData.data;
-            
-            for (let x = 0; x < width; x++) {
-                for (let y = 0; y < height; y++) {
-                    const cx = -2 + 3 * x / width;
-                    const cy = -1.1 + 2.2 * y / height;
-                    
-                    const iter = mandelbrot({x: cx, y: cy}, 100);
-                    const idx = (y * width + x) * 4;
-                    const color = iter === 100 ? 0 : 255;
-                    
-                    data[idx] = color;     // R
-                    data[idx+1] = color;   // G
-                    data[idx+2] = color;   // B
-                    data[idx+3] = 255;    // Alpha
-                }
-            }
-            ctx.putImageData(imageData, 0, 0);
-        }
-
-        try {
-            drawMandelbrot();
-            logTest('Full render completed', true);
-        } catch (e) {
-            console.error("Render failed:", e);
-            logTest('Full render completed', false);
-        }
-
-        // Final check
-        setTimeout(() => {
-            const pixels = ctx.getImageData(0, 0, 1, 1).data;
-            logTest('Canvas has drawn pixels', pixels[0] !== 0 || pixels[1] !== 0 || pixels[2] !== 0);
-        }, 100);
-    </script>
+<body class="bg-black flex items-center justify-center min-h-screen">
+  <video class="neon-glow rounded-lg shadow-lg" autoplay loop muted playsinline width="640" height="480" src="your_generated_output.mov"></video>
 </body>
 </html>
