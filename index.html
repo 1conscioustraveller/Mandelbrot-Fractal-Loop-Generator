@@ -19,51 +19,53 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+ctx.translate(canvas.width / 2, canvas.height / 2); // Move origin to center
 ctx.lineWidth = 2;
 ctx.lineCap = "round";
 
-function drawSpiral(flip = false) {
-    let h = 0;
-    ctx.save();
-    ctx.beginPath();
-    if (flip) {
-        ctx.rotate(Math.PI); // rotate 180° for opposite direction
-    }
+let h1 = 0; // hue for first spiral
+let h2 = 0; // hue for second spiral
+
+function drawSpiral(reverse=false) {
+    const sign = reverse ? -1 : 1;
+
     for (let i = 0; i < 16; i++) {
         for (let j = 0; j < 18; j++) {
-            ctx.strokeStyle = `hsl(${h * 360}, 100%, 50%)`;
-            h += 0.005;
+            const hue = reverse ? h2 : h1;
+            ctx.strokeStyle = `hsl(${hue * 360}, 100%, 50%)`;
 
-            ctx.rotate(Math.PI / 2); // 90 degrees
+            if (reverse) { h2 += 0.005; } else { h1 += 0.005; }
+
+            // First arc
             ctx.beginPath();
+            ctx.rotate(sign * 90 * Math.PI / 180);
             ctx.arc(0, 0, 150 - j * 6, 0, Math.PI / 2, false);
             ctx.stroke();
 
-            ctx.rotate(-Math.PI / 2);
+            // Second arc
             ctx.beginPath();
+            ctx.rotate(-sign * 90 * Math.PI / 180);
             ctx.arc(0, 0, 150 - j * 6, 0, Math.PI / 2, false);
             ctx.stroke();
 
-            ctx.rotate(Math.PI);
+            // Rotate 180 in respective direction
+            ctx.rotate(sign * 180 * Math.PI / 180);
         }
+        // small inner arc
         ctx.beginPath();
         ctx.arc(0, 0, 40, 0, 24 * Math.PI / 180, false);
         ctx.stroke();
     }
-    ctx.restore();
 }
 
-// Draw first spiral (original)
-ctx.save();
-ctx.translate(canvas.width / 2, canvas.height / 3); // position top
+// Draw first spiral
 drawSpiral(false);
-ctx.restore();
 
-// Draw second spiral (flipped)
-ctx.save();
-ctx.translate(canvas.width / 2, (canvas.height / 3) * 2); // position bottom
+// Reset rotation for second spiral
+ctx.setTransform(1, 0, 0, 1, canvas.width / 2, canvas.height / 2);
+
+// Draw second spiral (reverse angles)
 drawSpiral(true);
-ctx.restore();
 
 </script>
 </body>
