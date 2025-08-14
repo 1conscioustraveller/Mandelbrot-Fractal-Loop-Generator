@@ -20,9 +20,6 @@
                             secondary: '#16213e',
                         }
                     },
-                    fontFamily: {
-                        futura: ['Futura', 'sans-serif'],
-                    },
                     animation: {
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
@@ -47,6 +44,14 @@
         .glow {
             filter: drop-shadow(0 0 8px currentColor);
         }
+        .animate-change {
+            animation: pulse 0.5s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="bg-dark-primary text-gray-100 min-h-screen">
@@ -56,16 +61,6 @@
                 <span class="glow">OHM'S LAW SIMULATOR</span>
             </h1>
             <p class="text-xl text-electric-purple">V = I × R</p>
-            <div class="w-full max-w-md mx-auto mt-6">
-                <div class="relative">
-                    <div class="absolute inset-0 bg-electric-blue rounded-lg blur opacity-20"></div>
-                    <div class="relative bg-dark-secondary rounded-lg p-1">
-                        <div class="bg-dark-primary rounded-md p-4">
-                            <p class="text-sm">Explore how voltage (V), current (I), and resistance (R) interact in real-time</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </header>
 
         <main class="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -116,15 +111,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label for="init-voltage" class="block text-sm font-medium text-electric-blue mb-1">Voltage (V)</label>
-                                <input type="number" id="init-voltage" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
+                                <input type="number" id="init-voltage" placeholder="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
                             </div>
                             <div>
                                 <label for="init-current" class="block text-sm font-medium text-electric-blue mb-1">Current (A)</label>
-                                <input type="number" id="init-current" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
+                                <input type="number" id="init-current" placeholder="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
                             </div>
                             <div>
                                 <label for="init-resistance" class="block text-sm font-medium text-electric-blue mb-1">Resistance (Ω)</label>
-                                <input type="number" id="init-resistance" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
+                                <input type="number" id="init-resistance" placeholder="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-electric-blue">
                             </div>
                         </div>
                         
@@ -187,24 +182,28 @@
     <script>
         class Circuit {
             constructor(voltage, current, resistance) {
-                if (arguments.length !== 2) {
+                // Determine which two parameters were provided
+                const providedParams = [];
+                if (voltage !== undefined && voltage !== 0) providedParams.push({type: 'voltage', value: voltage});
+                if (current !== undefined && current !== 0) providedParams.push({type: 'current', value: current});
+                if (resistance !== undefined && resistance !== 0) providedParams.push({type: 'resistance', value: resistance});
+                
+                if (providedParams.length !== 2) {
                     throw new Error("Exactly two parameters must be provided");
                 }
                 
-                if (voltage !== undefined && current !== undefined) {
-                    this.voltage = voltage;
-                    this.current = current;
-                    this.resistance = voltage / current;
-                } else if (voltage !== undefined && resistance !== undefined) {
-                    this.voltage = voltage;
-                    this.resistance = resistance;
-                    this.current = voltage / resistance;
-                } else if (current !== undefined && resistance !== undefined) {
-                    this.current = current;
-                    this.resistance = resistance;
-                    this.voltage = current * resistance;
-                } else {
-                    throw new Error("Invalid parameter combination");
+                // Set the provided values
+                providedParams.forEach(param => {
+                    this[param.type] = param.value;
+                });
+                
+                // Calculate the missing value
+                if (!this.voltage) {
+                    this.voltage = this.current * this.resistance;
+                } else if (!this.current) {
+                    this.current = this.voltage / this.resistance;
+                } else if (!this.resistance) {
+                    this.resistance = this.voltage / this.current;
                 }
                 
                 this.validate();
@@ -243,13 +242,20 @@
             }
         }
 
-        let circuit = new Circuit(12, 3, 4); // Default circuit
+        let circuit = new Circuit(12, 3); // Default circuit with voltage and current
 
         function updateUI() {
             // Update visualization
-            document.getElementById('voltage-value').textContent = `${circuit.voltage}V`;
-            document.getElementById('current-value').textContent = `${circuit.current}A`;
-            document.getElementById('resistance-value').textContent = `${circuit.resistance}Ω`;
+            document.getElementById('voltage-value').textContent = `${circuit.voltage.toFixed(2)}V`;
+            document.getElementById('current-value').textContent = `${circuit.current.toFixed(2)}A`;
+            document.getElementById('resistance-value').textContent = `${circuit.resistance.toFixed(2)}Ω`;
+            
+            // Add animation to show change
+            ['voltage-value', 'current-value', 'resistance-value'].forEach(id => {
+                const element = document.getElementById(id);
+                element.classList.add('animate-change');
+                setTimeout(() => element.classList.remove('animate-change'), 500);
+            });
             
             // Update status panel
             document.getElementById('status-voltage').textContent = `${circuit.voltage.toFixed(2)} V`;
@@ -268,33 +274,25 @@
 
         document.getElementById('init-circuit').addEventListener('click', () => {
             try {
-                const voltage = parseFloat(document.getElementById('init-voltage').value);
-                const current = parseFloat(document.getElementById('init-current').value);
-                const resistance = parseFloat(document.getElementById('init-resistance').value);
+                const voltage = parseFloat(document.getElementById('init-voltage').value) || 0;
+                const current = parseFloat(document.getElementById('init-current').value) || 0;
+                const resistance = parseFloat(document.getElementById('init-resistance').value) || 0;
                 
-                const providedValues = [
-                    !isNaN(voltage) && voltage > 0,
-                    !isNaN(current) && current > 0,
-                    !isNaN(resistance) && resistance > 0
-                ].filter(Boolean).length;
+                circuit = new Circuit(
+                    voltage || undefined,
+                    current || undefined,
+                    resistance || undefined
+                );
                 
-                if (providedValues !== 2) {
-                    alert("Please provide exactly two positive values");
-                    return;
-                }
-                
-                const params = {};
-                if (!isNaN(voltage) && voltage > 0) params.voltage = voltage;
-                if (!isNaN(current) && current > 0) params.current = current;
-                if (!isNaN(resistance) && resistance > 0) params.resistance = resistance;
-                
-                circuit = new Circuit(params.voltage, params.current, params.resistance);
                 updateUI();
                 
                 // Show success animation
                 const button = document.getElementById('init-circuit');
+                button.textContent = "✓ Success!";
+                button.classList.remove('bg-electric-purple');
                 button.classList.add('bg-green-600');
                 setTimeout(() => {
+                    button.textContent = "Initialize Circuit";
                     button.classList.remove('bg-green-600');
                     button.classList.add('bg-electric-purple');
                 }, 1000);
@@ -330,8 +328,11 @@
                 
                 // Show success animation
                 const button = document.getElementById('update-circuit');
+                button.textContent = "✓ Updated!";
+                button.classList.remove('bg-electric-pink');
                 button.classList.add('bg-green-600');
                 setTimeout(() => {
+                    button.textContent = "Update Circuit";
                     button.classList.remove('bg-green-600');
                     button.classList.add('bg-electric-pink');
                 }, 1000);
