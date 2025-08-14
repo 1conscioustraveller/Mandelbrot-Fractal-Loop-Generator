@@ -1,72 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Double Rainbow Spiral</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Animated Spiral Pattern</title>
 <style>
-  body { margin: 0; background: black; overflow: hidden; }
-  canvas { display: block; margin: auto; background: black; }
+  body {
+    margin: 0;
+    background: black;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+  }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
-
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Fullscreen canvas
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-ctx.translate(canvas.width / 2, canvas.height / 2); // Move origin to center
-ctx.lineWidth = 2;
-ctx.lineCap = "round";
+// Center of the canvas
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
 
-let h1 = 0; // hue for first spiral
-let h2 = 0; // hue for second spiral
+let h = 0;
+const totalOuterLoops = 16;
+const innerLoops = 18;
 
-function drawSpiral(reverse=false) {
-    const sign = reverse ? -1 : 1;
-
-    for (let i = 0; i < 16; i++) {
-        for (let j = 0; j < 18; j++) {
-            const hue = reverse ? h2 : h1;
-            ctx.strokeStyle = `hsl(${hue * 360}, 100%, 50%)`;
-
-            if (reverse) { h2 += 0.005; } else { h1 += 0.005; }
-
-            // First arc
-            ctx.beginPath();
-            ctx.rotate(sign * 90 * Math.PI / 180);
-            ctx.arc(0, 0, 150 - j * 6, 0, Math.PI / 2, false);
-            ctx.stroke();
-
-            // Second arc
-            ctx.beginPath();
-            ctx.rotate(-sign * 90 * Math.PI / 180);
-            ctx.arc(0, 0, 150 - j * 6, 0, Math.PI / 2, false);
-            ctx.stroke();
-
-            // Rotate 180 in respective direction
-            ctx.rotate(sign * 180 * Math.PI / 180);
-        }
-        // small inner arc
-        ctx.beginPath();
-        ctx.arc(0, 0, 40, 0, 24 * Math.PI / 180, false);
-        ctx.stroke();
-    }
+// Store all the spiral data first
+const spirals = [];
+for (let i = 0; i < totalOuterLoops; i++) {
+  const spiral = [];
+  for (let j = 0; j < innerLoops; j++) {
+    const radius = 150 - j * 6;
+    const hue = (h + 0.005 * (i * innerLoops + j)) * 360;
+    spiral.push({radius, hue});
+  }
+  spirals.push(spiral);
 }
 
-// Draw first spiral
-drawSpiral(false);
+// Function to draw one spiral (outer loop)
+function drawSpiral(index) {
+  if (index >= spirals.length) return;
+  const spiral = spirals[index];
 
-// Reset rotation for second spiral
-ctx.setTransform(1, 0, 0, 1, canvas.width / 2, canvas.height / 2);
+  // Draw the spiral arcs
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(Math.PI / 2); // 90 degrees in radians
 
-// Draw second spiral (reverse angles)
-drawSpiral(true);
+  for (let j = 0; j < spiral.length; j++) {
+    const {radius, hue} = spiral[j];
+    ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
 
+    // Draw first arc
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.rotate(Math.PI); // 180 degrees
+
+    // Draw second arc
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.rotate(-Math.PI / 2); // Reset rotation for next j
+  }
+
+  // Draw the small circle at the end
+  ctx.restore();
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(Math.PI / 12 * 2); // 24 degrees in radians
+  ctx.beginPath();
+  ctx.arc(0, 0, 40, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Schedule next spiral
+  setTimeout(() => drawSpiral(index + 1), 300); // delay in ms
+}
+
+// Start drawing animations
+drawSpiral(0);
 </script>
 </body>
 </html>
