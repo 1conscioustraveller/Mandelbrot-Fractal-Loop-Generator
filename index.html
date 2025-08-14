@@ -1,22 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-gray-900 text-white font-sans">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Neon Transition</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .neon-glow {
-      box-shadow: 0 0 20px #39ff20, 0 0 40px #39ff20, 0 0 60px #39ff20;
-      animation: pulse 2s infinite alternate;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 10px #39ff20, 0 0 20px #39ff20, 0 0 30px #39ff20; }
-      100% { box-shadow: 0 0 30px #39ff20, 0 0 60px #39ff20, 0 0 90px #39ff20; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Animation Generator</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black flex items-center justify-center min-h-screen">
-  <video class="neon-glow rounded-lg shadow-lg" autoplay loop muted playsinline width="640" height="480" src="your_generated_output.mov"></video>
+<body class="flex items-center justify-center min-h-screen p-4">
+  <div class="max-w-xl w-full p-6 bg-gray-800 rounded-3xl shadow-lg border-4 border-gradient-neon text-center">
+    <h1 class="text-4xl font-bold mb-4 neon-glow">Neon Animation Generator</h1>
+    <p class="mb-6">Create stunning animations with transparency. Download your .mov file below.</p>
+    <!-- Replace 'your_generated_video.mov' with the actual filename after generation -->
+    <a href="your_generated_video.mov" download class="inline-block px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full font-semibold shadow-neon neon-glow transition-transform transform hover:scale-105">
+      Download Animation
+    </a>
+  </div>
 </body>
+
+<style>
+/* Neon glow effect */
+@layer utilities {
+  .neon-glow {
+    text-shadow:
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 20px #ff00de,
+      0 0 30px #ff00de,
+      0 0 40px #ff00de,
+      0 0 55px #ff00de,
+      0 0 75px #ff00de;
+  }
+  .shadow-neon {
+    box-shadow:
+      0 0 5px #ff00de,
+      0 0 10px #ff00de,
+      0 0 20px #ff00de,
+      0 0 40px #ff00de;
+  }
+  /* Gradient border for the container */
+  .border-gradient-neon {
+    border-image: linear-gradient(45deg, #8b5cf6, #ec4899) 1;
+  }
+}
+</style>
 </html>
