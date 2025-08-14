@@ -3,92 +3,61 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Animated Spiral Pattern</title>
+<title>Simple Animation with JavaScript</title>
 <style>
-  body {
-    margin: 0;
-    background: black;
-  }
-  canvas {
-    display: block;
-    margin: auto;
-  }
+  body { margin: 0; overflow: hidden; }
+  canvas { display: block; }
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
+<canvas id="myCanvas"></canvas>
+
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('myCanvas');
+  const ctx = canvas.getContext('2d');
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-// Center of the canvas
-const cx = canvas.width / 2;
-const cy = canvas.height / 2;
-
-let h = 0;
-const totalOuterLoops = 16;
-const innerLoops = 18;
-
-// Store all the spiral data first
-const spirals = [];
-for (let i = 0; i < totalOuterLoops; i++) {
-  const spiral = [];
-  for (let j = 0; j < innerLoops; j++) {
-    const radius = 150 - j * 6;
-    const hue = (h + 0.005 * (i * innerLoops + j)) * 360;
-    spiral.push({radius, hue});
+  // Resize canvas to fill the window
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
   }
-  spirals.push(spiral);
-}
+  window.addEventListener('resize', resize);
+  resize();
 
-// Function to draw one spiral (outer loop)
-function drawSpiral(index) {
-  if (index >= spirals.length) return;
-  const spiral = spirals[index];
+  // Object properties
+  const circle = {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    radius: 30,
+    dx: (Math.random() - 0.5) * 4,
+    dy: (Math.random() - 0.5) * 4
+  };
 
-  // Draw the spiral arcs
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(Math.PI / 2); // 90 degrees in radians
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (let j = 0; j < spiral.length; j++) {
-    const {radius, hue} = spiral[j];
-    ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
-
-    // Draw first arc
+    // Draw circle
     ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI / 2);
-    ctx.stroke();
+    ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'blue';
+    ctx.fill();
 
-    ctx.rotate(Math.PI); // 180 degrees
+    // Move circle
+    circle.x += circle.dx;
+    circle.y += circle.dy;
 
-    // Draw second arc
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI / 2);
-    ctx.stroke();
+    // Bounce off walls
+    if (circle.x + circle.radius > canvas.width || circle.x - circle.radius < 0) {
+      circle.dx *= -1;
+    }
+    if (circle.y + circle.radius > canvas.height || circle.y - circle.radius < 0) {
+      circle.dy *= -1;
+    }
 
-    ctx.rotate(-Math.PI / 2); // Reset rotation for next j
+    requestAnimationFrame(animate);
   }
 
-  // Draw the small circle at the end
-  ctx.restore();
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(Math.PI / 12 * 2); // 24 degrees in radians
-  ctx.beginPath();
-  ctx.arc(0, 0, 40, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
-
-  // Schedule next spiral
-  setTimeout(() => drawSpiral(index + 1), 300); // delay in ms
-}
-
-// Start drawing animations
-drawSpiral(0);
+  animate();
 </script>
 </body>
 </html>
