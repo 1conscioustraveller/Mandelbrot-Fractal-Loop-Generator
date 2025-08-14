@@ -1,34 +1,37 @@
-        <!-- Project 2: Multiplication Table Generator -->
+        <!-- Project 3: Fraction Visualizer -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-semibold text-blue-700 mb-4">2. Multiplication Table Generator</h2>
-            <p class="text-gray-700 mb-4">Generate a multiplication table for any number.</p>
+            <h2 class="text-2xl font-semibold text-blue-700 mb-4">3. Fraction Visualizer</h2>
+            <p class="text-gray-700 mb-4">Visualize fractions and see equivalent forms.</p>
             
-            <div class="flex flex-col md:flex-row gap-4 items-center mb-6">
+            <div class="flex flex-col md:flex-row gap-6 mb-6">
                 <div class="flex-1">
-                    <label for="multiplier" class="block text-gray-700 mb-2">Enter a number:</label>
-                    <input type="number" id="multiplier" min="1" max="12" value="5" 
-                           class="border border-gray-300 rounded py-2 px-4 w-full">
+                    <div class="flex items-center gap-4 mb-4">
+                        <input type="number" id="numerator" min="0" max="12" value="1" 
+                               class="border border-gray-300 rounded py-2 px-4 w-20 text-center">
+                        <span class="text-xl">/</span>
+                        <input type="number" id="denominator" min="1" max="12" value="2" 
+                               class="border border-gray-300 rounded py-2 px-4 w-20 text-center">
+                        <button onclick="drawFraction()" 
+                                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+                            Draw
+                        </button>
+                    </div>
+                    
+                    <div class="border border-gray-300 rounded-lg p-4 h-64 flex items-center justify-center">
+                        <canvas id="fractionCanvas" width="300" height="250" class="max-w-full"></canvas>
+                    </div>
                 </div>
-                <button onclick="generateTable()" 
-                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded h-12">
-                    Generate Table
-                </button>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-gray-50 border border-gray-200">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="py-2 px-4 border">Multiplier</th>
-                            <th class="py-2 px-4 border">×</th>
-                            <th class="py-2 px-4 border">Multiplicand</th>
-                            <th class="py-2 px-4 border">=</th>
-                            <th class="py-2 px-4 border">Product</th>
-                        </tr>
-                    </thead>
-                    <tbody id="multiplicationTable">
-                        <!-- Table will be generated here -->
-                    </tbody>
-                </table>
+                
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold mb-2">Equivalent Fractions</h3>
+                    <div id="equivalentFractions" class="space-y-2">
+                        <!-- Equivalent fractions will appear here -->
+                    </div>
+                    
+                    <h3 class="text-lg font-semibold mt-4 mb-2">Fraction Info</h3>
+                    <div id="fractionInfo" class="text-gray-700">
+                        <!-- Fraction info will appear here -->
+                    </div>
+                </div>
             </div>
         </div>
