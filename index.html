@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Ohm's Law Interactive Circuit</title>
 
-    <!-- TailwindCSS CDN -->
+    <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- PyScript -->
@@ -21,25 +21,35 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        input[type=range] {
+            accent-color: #22d3ee; /* Tailwind cyan-400 */
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="glass rounded-2xl shadow-2xl max-w-5xl w-full p-8">
-        <h1 class="text-center text-4xl font-bold mb-6 tracking-wide text-cyan-400">
+    <div class="glass rounded-2xl shadow-2xl max-w-6xl w-full p-8 space-y-6">
+        <h1 class="text-center text-4xl font-bold tracking-wide text-cyan-400">
             ⚡ Ohm's Law Interactive Circuit
         </h1>
 
-        <div class="flex flex-col lg:flex-row gap-8 items-center justify-center">
-            <!-- Python-rendered circuit -->
-            <div class="w-full lg:w-2/3 bg-white rounded-xl p-4 shadow-lg">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Circuit Display -->
+            <div class="bg-white rounded-xl p-4 shadow-lg w-full lg:w-2/3">
                 <py-config>
                     packages = ["matplotlib"]
                 </py-config>
 
-                <py-script>
+                <py-script output="circuit-plot">
+from pyscript import Element
 import math
 import matplotlib.pyplot as plt
+
+# Global state
+mode = "Solve I"
+V = 9.0
+I = 0.09
+R = 100.0
 
 def draw_battery(ax, x, y, height, spacing):
     ax.plot([x - spacing/2, x - spacing/2], [y - height, y + height])
@@ -65,102 +75,107 @@ def draw_resistor(ax, x1, y1, x2, y2, zigzags=6, amplitude=0.25):
     xs, ys = zip(*pts)
     ax.plot(xs, ys)
 
-class OhmsLawInteractive:
-    def __init__(self):
-        self.fig, self.ax = plt.subplots(figsize=(6, 4))
-        plt.subplots_adjust(left=0.08, right=0.92, top=0.85, bottom=0.26)
+def format_val(val, unit):
+    if val is None or isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+        return "—"
+    if abs(val) >= 100:
+        s = f"{val:.0f}"
+    elif abs(val) >= 10:
+        s = f"{val:.1f}"
+    else:
+        s = f"{val:.2f}"
+    return f"{s} {unit}"
 
-        self.V = 9.0
-        self.R = 100.0
-        self.I = self.V / self.R
+def update_plot(*args):
+    global mode, V, I, R
+    # Get values from sliders/select
+    mode = Element("mode-select").element.value
+    V = float(Element("slider-V").element.value)
+    I = float(Element("slider-I").element.value)
+    R = float(Element("slider-R").element.value)
 
-        self.left, self.right = -4.0, 4.0
-        self.bottom, self.top = -1.5, 1.5
-
-        self.battery_x = self.left
-        self.battery_y = 0.0
-
-        self.res_left = 0.0
-        self.res_right = self.right
-        self.res_y = 0.0
-
-        self._build_canvas()
-        self._update()
-
-    def _build_canvas(self):
-        ax = self.ax
-        ax.clear()
-        ax.plot([self.left, self.right], [self.top, self.top])
-        ax.plot([self.right, self.right], [self.top, self.bottom])
-        ax.plot([self.left, self.right], [self.bottom, self.bottom])
-        ax.plot([self.left, self.left], [self.bottom, self.top])
-
-        draw_battery(ax, self.battery_x, self.battery_y, height=0.8, spacing=0.6)
-        draw_resistor(ax, self.res_left, self.res_y, self.res_right, self.res_y)
-
-        self.arrow = ax.annotate("", xy=(self.right - 0.5, self.top),
-                                 xytext=(self.left + 0.5, self.top),
-                                 arrowprops=dict(arrowstyle="->", linewidth=2.0))
-
-        self.text_I = ax.text(0.0, self.top + 0.3, "", ha="center", va="bottom", fontsize=11)
-        self.text_V = ax.text(self.left - 0.2, 0.0, "", ha="right", va="center", fontsize=11, rotation=90)
-        self.text_R = ax.text(self.res_right + 0.2, self.res_y, "", ha="left", va="center", fontsize=11)
-        self.eq_text = ax.text(0.0, self.bottom - 0.4, "", ha="center", va="top", fontsize=12)
-
-        ax.set_facecolor("#f8fafc")
-        ax.set_aspect("equal", adjustable="box")
-        ax.set_xlim(self.left - 1.5, self.right + 1.5)
-        ax.set_ylim(self.bottom - 1.0, self.top + 1.0)
-        ax.axis("off")
-
-    def _update(self):
-        V, R = self.V, self.R
+    # Compute missing variable
+    if mode == "Solve I":
         I = float('nan') if R <= 0 else V / R
-        lw = 1.0 + 4.0 * (0.0 if math.isnan(I) else min(1.0, abs(I)))
-        self.arrow.remove()
-        self.arrow = self.ax.annotate("", xy=(self.right - 0.5, self.top),
-                                      xytext=(self.left + 0.5, self.top),
-                                      arrowprops=dict(arrowstyle="->", linewidth=lw))
+    elif mode == "Solve V":
+        V = I * R
+    elif mode == "Solve R":
+        R = float('nan') if I <= 0 else V / I
 
-        self.text_I.set_text(f"I = {self._fmt(I)} A")
-        self.text_V.set_text(f"V = {self._fmt(V)} V")
-        self.text_R.set_text(f"R = {self._fmt(R)} Ω")
-        self.eq_text.set_text(r"$I = \dfrac{V}{R}$")
+    # Draw
+    fig, ax = plt.subplots(figsize=(6,4))
+    left, right, top, bottom = -4, 4, 1.5, -1.5
+    ax.plot([left, right], [top, top])
+    ax.plot([right, right], [top, bottom])
+    ax.plot([left, right], [bottom, bottom])
+    ax.plot([left, left], [bottom, top])
 
-    @staticmethod
-    def _fmt(val):
-        if val is None or isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
-            return "—"
-        if abs(val) >= 100:
-            return f"{val:.0f}"
-        elif abs(val) >= 10:
-            return f"{val:.1f}"
-        else:
-            return f"{val:.2f}"
+    draw_battery(ax, left, 0.0, height=0.8, spacing=0.6)
+    draw_resistor(ax, 0.0, 0.0, right, 0.0)
 
-app = OhmsLawInteractive()
-plt.show()
+    lw = 1.0 + 4.0 * (0.0 if math.isnan(I) else min(1.0, abs(I)/2.0))
+    ax.annotate("", xy=(right - 0.5, top), xytext=(left + 0.5, top),
+                arrowprops=dict(arrowstyle="->", linewidth=lw))
+
+    ax.text(0.0, top + 0.3, f"I = {format_val(I, 'A')}", ha="center", va="bottom")
+    ax.text(left - 0.2, 0.0, f"V = {format_val(V, 'V')}", ha="right", va="center", rotation=90)
+    ax.text(right + 0.2, 0.0, f"R = {format_val(R, 'Ω')}", ha="left", va="center")
+
+    if mode == "Solve I":
+        eq = r"$I = \dfrac{V}{R}$"
+    elif mode == "Solve V":
+        eq = r"$V = I \cdot R$"
+    else:
+        eq = r"$R = \dfrac{V}{I}$"
+    ax.text(0.0, bottom - 0.4, eq, ha="center", va="top")
+
+    ax.set_aspect("equal")
+    ax.set_xlim(left - 1.5, right + 1.5)
+    ax.set_ylim(bottom - 1.0, top + 1.0)
+    ax.axis("off")
+
+    Element("circuit-plot").clear()
+    fig.savefig(Element("circuit-plot").element, format="png")
+
+# Initial draw
+update_plot()
                 </py-script>
+
+                <!-- Circuit image -->
+                <div id="circuit-plot" class="flex justify-center"></div>
             </div>
 
-            <!-- Info panel -->
+            <!-- Controls -->
             <div class="w-full lg:w-1/3 space-y-4">
-                <div class="p-4 rounded-lg glass">
-                    <h2 class="text-xl font-semibold text-cyan-300">What is Ohm’s Law?</h2>
-                    <p class="text-gray-300 mt-2 text-sm">
-                        Ohm’s Law defines the relationship between <span class="text-cyan-200">Voltage (V)</span>,
-                        <span class="text-cyan-200">Current (I)</span>, and <span class="text-cyan-200">Resistance (R)</span>:
-                        <code class="bg-gray-800 text-cyan-300 px-1 py-0.5 rounded">V = I × R</code>.
-                    </p>
+                <div class="glass p-4 rounded-lg">
+                    <label class="block mb-2 font-semibold text-cyan-300">Mode</label>
+                    <select id="mode-select" class="w-full p-2 rounded bg-gray-900 text-white"
+                            onchange="pyscript.runtime.globals.update_plot()">
+                        <option>Solve I</option>
+                        <option>Solve V</option>
+                        <option>Solve R</option>
+                    </select>
                 </div>
 
-                <div class="p-4 rounded-lg glass">
-                    <h2 class="text-xl font-semibold text-cyan-300">Tips</h2>
-                    <ul class="list-disc pl-4 text-gray-300 text-sm">
-                        <li>Increase resistance to lower current.</li>
-                        <li>Voltage directly affects current.</li>
-                        <li>Perfect for understanding basic circuits.</li>
-                    </ul>
+                <div class="glass p-4 rounded-lg">
+                    <label for="slider-V" class="block mb-2 font-semibold text-cyan-300">Voltage V (V)</label>
+                    <input id="slider-V" type="range" min="0" max="24" step="0.1" value="9"
+                           class="w-full"
+                           oninput="pyscript.runtime.globals.update_plot()">
+                </div>
+
+                <div class="glass p-4 rounded-lg">
+                    <label for="slider-I" class="block mb-2 font-semibold text-cyan-300">Current I (A)</label>
+                    <input id="slider-I" type="range" min="0" max="2" step="0.01" value="0.09"
+                           class="w-full"
+                           oninput="pyscript.runtime.globals.update_plot()">
+                </div>
+
+                <div class="glass p-4 rounded-lg">
+                    <label for="slider-R" class="block mb-2 font-semibold text-cyan-300">Resistance R (Ω)</label>
+                    <input id="slider-R" type="range" min="1" max="1000" step="1" value="100"
+                           class="w-full"
+                           oninput="pyscript.runtime.globals.update_plot()">
                 </div>
             </div>
         </div>
