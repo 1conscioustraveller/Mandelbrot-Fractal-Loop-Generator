@@ -1,37 +1,581 @@
-        <!-- Project 3: Fraction Visualizer -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-semibold text-blue-700 mb-4">3. Fraction Visualizer</h2>
-            <p class="text-gray-700 mb-4">Visualize fractions and see equivalent forms.</p>
+        <!-- Project 5: Geometry Explorer -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-blue-700 mb-4">5. Geometry Explorer</h2>
+            <p class="text-gray-700 mb-4">Explore shapes and their properties.</p>
             
-            <div class="flex flex-col md:flex-row gap-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-6">
                 <div class="flex-1">
-                    <div class="flex items-center gap-4 mb-4">
-                        <input type="number" id="numerator" min="0" max="12" value="1" 
-                               class="border border-gray-300 rounded py-2 px-4 w-20 text-center">
-                        <span class="text-xl">/</span>
-                        <input type="number" id="denominator" min="1" max="12" value="2" 
-                               class="border border-gray-300 rounded py-2 px-4 w-20 text-center">
-                        <button onclick="drawFraction()" 
-                                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
-                            Draw
-                        </button>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Select a shape:</label>
+                        <select id="shapeSelector" onchange="drawSelectedShape()" class="border border-gray-300 rounded py-2 px-4 w-full">
+                            <option value="square">Square</option>
+                            <option value="rectangle">Rectangle</option>
+                            <option value="triangle">Triangle</option>
+                            <option value="circle">Circle</option>
+                        </select>
                     </div>
                     
-                    <div class="border border-gray-300 rounded-lg p-4 h-64 flex items-center justify-center">
-                        <canvas id="fractionCanvas" width="300" height="250" class="max-w-full"></canvas>
+                    <div class="border border-gray-300 rounded-lg p-4 mb-4">
+                        <canvas id="geometryCanvas" width="350" height="300" class="mx-auto"></canvas>
                     </div>
                 </div>
                 
                 <div class="flex-1">
-                    <h3 class="text-lg font-semibold mb-2">Equivalent Fractions</h3>
-                    <div id="equivalentFractions" class="space-y-2">
-                        <!-- Equivalent fractions will appear here -->
-                    </div>
-                    
-                    <h3 class="text-lg font-semibold mt-4 mb-2">Fraction Info</h3>
-                    <div id="fractionInfo" class="text-gray-700">
-                        <!-- Fraction info will appear here -->
+                    <div id="shapeProperties" class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Properties</h3>
+                            <div id="propertiesList" class="text-gray-700">
+                                <!-- Properties will appear here -->
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold mb-2">Calculate Area/Perimeter</h3>
+                            <div id="calculationInputs">
+                                <!-- Input fields will appear here -->
+                            </div>
+                            <button onclick="calculateGeometry()" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Calculate
+                            </button>
+                            <div id="geometryResults" class="mt-2 text-lg font-semibold">
+                                <!-- Results will appear here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <script>
+        // Project 1: Addition Visualizer
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drag(event) {
+            event.dataTransfer.setData("text", event.target.id);
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            
+            // Clone the element so it remains in the pool
+            const clone = draggedElement.cloneNode(true);
+            clone.id = 'dragged_' + Date.now(); // Give it a unique ID
+            clone.addEventListener('dragstart', function(e) {
+                drag(e);
+            });
+            
+            event.target.appendChild(clone);
+            updateAdditionNumbers();
+        }
+
+        function updateAdditionNumbers() {
+            const box1Count = document.getElementById('box1').children.length;
+            const box2Count = document.getElementById('box2').children.length;
+            
+            document.getElementById('num1').textContent = box1Count;
+            document.getElementById('num2').textContent = box2Count;
+        }
+
+        function calculateAddition() {
+            const box1Count = document.getElementById('box1').children.length;
+            const box2Count = document.getElementById('box2').children.length;
+            const sum = box1Count + box2Count;
+            
+            document.getElementById('sum').textContent = sum;
+        }
+
+        // Initialize draggable objects
+        document.querySelectorAll('.fruit').forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                drag(e);
+            });
+        });
+
+        // Project 2: Multiplication Table Generator
+        function generateTable() {
+            const multiplier = parseInt(document.getElementById('multiplier').value);
+            const tableBody = document.getElementById('multiplicationTable');
+            tableBody.innerHTML = '';
+            
+            for (let i = 1; i <= 12; i++) {
+                const row = document.createElement('tr');
+                row.className = i % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                
+                row.innerHTML = `
+                    <td class="py-2 px-4 border text-center">${multiplier}</td>
+                    <td class="py-2 px-4 border text-center">×</td>
+                    <td class="py-2 px-4 border text-center">${i}</td>
+                    <td class="py-2 px-4 border text-center">=</td>
+                    <td class="py-2 px-4 border text-center">${multiplier * i}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Initialize multiplication table
+        generateTable();
+
+        // Project 3: Fraction Visualizer
+        function drawFraction() {
+            const numerator = parseInt(document.getElementById('numerator').value);
+            const denominator = parseInt(document.getElementById('denominator').value);
+            const canvas = document.getElementById('fractionCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw the whole (circle or rectangle)
+            ctx.fillStyle = '#E5E7EB';
+            ctx.fillRect(50, 50, 200, 100);
+            ctx.strokeStyle = '#6B7280';
+            ctx.strokeRect(50, 50, 200, 100);
+            
+            // Draw the parts
+            const partWidth = 200 / denominator;
+            ctx.fillStyle = '#3B82F6';
+            
+            for (let i = 0; i < numerator; i++) {
+                ctx.fillRect(50 + (i * partWidth), 50, partWidth, 100);
+            }
+            
+            // Draw dividing lines
+            ctx.strokeStyle = '#1D4ED8';
+            for (let i = 1; i < denominator; i++) {
+                ctx.beginPath();
+                ctx.moveTo(50 + (i * partWidth), 50);
+                ctx.lineTo(50 + (i * partWidth), 150);
+                ctx.stroke();
+            }
+            
+            // Display fraction text
+            ctx.fillStyle = '#000000';
+            ctx.font = '24px Arial';
+            ctx.fillText(`${numerator}/${denominator}`, 130, 190);
+            
+            // Show equivalent fractions
+            showEquivalentFractions(numerator, denominator);
+            showFractionInfo(numerator, denominator);
+        }
+
+        function showEquivalentFractions(numerator, denominator) {
+            const container = document.getElementById('equivalentFractions');
+            container.innerHTML = '';
+            
+            // Find up to 5 equivalent fractions
+            let count = 0;
+            for (let factor = 2; factor <= 5 && count < 5; factor++) {
+                if (denominator * factor <= 50) { // Limit denominator size
+                    const equivNumerator = numerator * factor;
+                    const equivDenominator = denominator * factor;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'bg-blue-50 p-2 rounded';
+                    div.textContent = `${numerator}/${denominator} = ${equivNumerator}/${equivDenominator}`;
+                    container.appendChild(div);
+                    count++;
+                }
+            }
+            
+            if (count === 0) {
+                const div = document.createElement('div');
+                div.className = 'text-gray-500';
+                div.textContent = 'No equivalent fractions with denominator ≤ 50';
+                container.appendChild(div);
+            }
+        }
+
+        function showFractionInfo(numerator, denominator) {
+            const container = document.getElementById('fractionInfo');
+            
+            // Simplify fraction
+            const gcd = findGCD(numerator, denominator);
+            const simplifiedNum = numerator / gcd;
+            const simplifiedDen = denominator / gcd;
+            
+            // Convert to decimal
+            const decimalValue = (numerator / denominator).toFixed(3);
+            
+            // Convert to percentage
+            const percentage = (numerator / denominator * 100).toFixed(1);
+            
+            container.innerHTML = `
+                <p><strong>Simplified:</strong> ${simplifiedNum}/${simplifiedDen}</p>
+                <p><strong>Decimal:</strong> ${decimalValue}</p>
+                <p><strong>Percentage:</strong> ${percentage}%</p>
+            `;
+        }
+
+        function findGCD(a, b) {
+            return b === 0 ? a : findGCD(b, a % b);
+        }
+
+        // Initialize fraction visualizer
+        drawFraction();
+
+        // Project 4: Word Problem Generator
+        let currentProblem = null;
+        let score = 0;
+        let totalProblems = 0;
+
+        const additionProblems = [
+            { problem: "Sarah has {a} apples. Her friend gives her {b} more. How many apples does Sarah have now?", answer: (a, b) => a + b },
+            { problem: "There are {a} birds on a tree. {b} more birds join them. How many birds are there now?", answer: (a, b) => a + b },
+            { problem: "A classroom has {a} boys and {b} girls. How many students are there in total?", answer: (a, b) => a + b }
+        ];
+
+        const subtractionProblems = [
+            { problem: "Mike has {a} candies. He eats {b} of them. How many candies does Mike have left?", answer: (a, b) => a - b },
+            { problem: "There were {a} flowers in the garden. {b} of them wilted. How many flowers are still blooming?", answer: (a, b) => a - b },
+            { problem: "A book has {a} pages. You've read {b} pages. How many pages are left to read?", answer: (a, b) => a - b }
+        ];
+
+        const multiplicationProblems = [
+            { problem: "There are {a} bags with {b} marbles in each. How many marbles are there in total?", answer: (a, b) => a * b },
+            { problem: "A pizza has {a} slices. If you have {b} pizzas, how many slices are there altogether?", answer: (a, b) => a * b },
+            { problem: "Each box contains {a} crayons. How many crayons are there in {b} boxes?", answer: (a, b) => a * b }
+        ];
+
+        const divisionProblems = [
+            { problem: "You have {a} cookies to share equally among {b} friends. How many cookies does each friend get?", answer: (a, b) => Math.floor(a / b) },
+            { problem: "{a} students need to be divided into {b} teams. How many students will be on each team?", answer: (a, b) => Math.floor(a / b) },
+            { problem: "A {a} inch rope is cut into {b} equal pieces. How long is each piece?", answer: (a, b) => (a / b).toFixed(1) }
+        ];
+
+        function generateProblem(operation) {
+            let problems, a, b;
+            
+            switch(operation) {
+                case 'addition':
+                    problems = additionProblems;
+                    a = Math.floor(Math.random() * 20) + 5;
+                    b = Math.floor(Math.random() * 20) + 5;
+                    break;
+                case 'subtraction':
+                    problems = subtractionProblems;
+                    a = Math.floor(Math.random() * 30) + 10;
+                    b = Math.floor(Math.random() * (a - 5)) + 5;
+                    break;
+                case 'multiplication':
+                    problems = multiplicationProblems;
+                    a = Math.floor(Math.random() * 10) + 2;
+                    b = Math.floor(Math.random() * 10) + 2;
+                    break;
+                case 'division':
+                    problems = divisionProblems;
+                    b = Math.floor(Math.random() * 5) + 2;
+                    a = b * (Math.floor(Math.random() * 8) + 3);
+                    break;
+            }
+            
+            const selectedProblem = problems[Math.floor(Math.random() * problems.length)];
+            const problemText = selectedProblem.problem.replace('{a}', a).replace('{b}', b);
+            
+            currentProblem = {
+                text: problemText,
+                answer: selectedProblem.answer(a, b),
+                operation: operation
+            };
+            
+            document.getElementById('wordProblem').textContent = problemText;
+            document.getElementById('userAnswer').value = '';
+            document.getElementById('solutionSteps').innerHTML = '';
+        }
+
+        function checkAnswer() {
+            if (!currentProblem) {
+                alert('Please generate a problem first!');
+                return;
+            }
+            
+            const userAnswer = parseFloat(document.getElementById('userAnswer').value);
+            if (isNaN(userAnswer)) {
+                alert('Please enter a valid number!');
+                return;
+            }
+            
+            totalProblems++;
+            let isCorrect = false;
+            let solutionSteps = '';
+            
+            // Check answer with some tolerance for floating point
+            if (typeof currentProblem.answer === 'number') {
+                isCorrect = Math.abs(userAnswer - currentProblem.answer) < 0.001;
+            } else {
+                isCorrect = userAnswer.toString() === currentProblem.answer.toString();
+            }
+            
+            // Generate solution steps based on operation
+            const parts = currentProblem.text.split(' ');
+            const a = parseFloat(parts[parts.findIndex(p => p === '{a}') - 1]);
+            const b = parseFloat(parts[parts.findIndex(p => p === '{b}') - 1]);
+            
+            switch(currentProblem.operation) {
+                case 'addition':
+                    solutionSteps = `${a} + ${b} = ${a + b}`;
+                    break;
+                case 'subtraction':
+                    solutionSteps = `${a} - ${b} = ${a - b}`;
+                    break;
+                case 'multiplication':
+                    solutionSteps = `${a} × ${b} = ${a * b}`;
+                    break;
+                case 'division':
+                    solutionSteps = `${a} ÷ ${b} = ${(a / b).toFixed(1)}`;
+                    break;
+            }
+            
+            if (isCorrect) {
+                score++;
+                document.getElementById('solutionSteps').innerHTML = `
+                    <p class="text-green-600 font-semibold">Correct!</p>
+                    <p>${solutionSteps}</p>
+                `;
+            } else {
+                document.getElementById('solutionSteps').innerHTML = `
+                    <p class="text-red-600 font-semibold">Incorrect. The correct answer is ${currentProblem.answer}.</p>
+                    <p>${solutionSteps}</p>
+                `;
+            }
+            
+            // Update score display
+            document.getElementById('score').textContent = score;
+            document.getElementById('total').textContent = totalProblems;
+            document.getElementById('progressBar').style.width = `${(score / totalProblems) * 100}%`;
+        }
+
+        // Project 5: Geometry Explorer
+        function drawSelectedShape() {
+            const shape = document.getElementById('shapeSelector').value;
+            const canvas = document.getElementById('geometryCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw selected shape
+            switch(shape) {
+                case 'square':
+                    drawSquare(ctx);
+                    updateSquareProperties();
+                    break;
+                case 'rectangle':
+                    drawRectangle(ctx);
+                    updateRectangleProperties();
+                    break;
+                case 'triangle':
+                    drawTriangle(ctx);
+                    updateTriangleProperties();
+                    break;
+                case 'circle':
+                    drawCircle(ctx);
+                    updateCircleProperties();
+                    break;
+            }
+        }
+
+        function drawSquare(ctx) {
+            const side = 150;
+            ctx.fillStyle = '#93C5FD';
+            ctx.fillRect(100, 75, side, side);
+            ctx.strokeStyle = '#1E40AF';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(100, 75, side, side);
+            
+            // Label sides
+            ctx.fillStyle = '#000000';
+            ctx.font = '14px Arial';
+            ctx.fillText(`${side}px`, 100 + side/2 - 20, 75 - 10);
+            ctx.fillText(`${side}px`, 100 + side + 10, 75 + side/2);
+        }
+
+        function updateSquareProperties() {
+            const side = 150;
+            document.getElementById('propertiesList').innerHTML = `
+                <ul class="list-disc pl-5">
+                    <li>All sides are equal (${side}px each)</li>
+                    <li>All angles are 90 degrees</li>
+                    <li>Has 4 lines of symmetry</li>
+                </ul>
+            `;
+            
+            document.getElementById('calculationInputs').innerHTML = `
+                <p>Side length: ${side}px</p>
+            `;
+        }
+
+        function drawRectangle(ctx) {
+            const width = 180;
+            const height = 100;
+            ctx.fillStyle = '#86EFAC';
+            ctx.fillRect(85, 100, width, height);
+            ctx.strokeStyle = '#166534';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(85, 100, width, height);
+            
+            // Label sides
+            ctx.fillStyle = '#000000';
+            ctx.font = '14px Arial';
+            ctx.fillText(`${width}px`, 85 + width/2 - 20, 100 - 10);
+            ctx.fillText(`${height}px`, 85 + width + 10, 100 + height/2);
+        }
+
+        function updateRectangleProperties() {
+            const width = 180;
+            const height = 100;
+            document.getElementById('propertiesList').innerHTML = `
+                <ul class="list-disc pl-5">
+                    <li>Opposite sides are equal (${width}px and ${height}px)</li>
+                    <li>All angles are 90 degrees</li>
+                    <li>Has 2 lines of symmetry</li>
+                </ul>
+            `;
+            
+            document.getElementById('calculationInputs').innerHTML = `
+                <div class="flex gap-2 mb-2">
+                    <label>Width:</label>
+                    <input type="number" id="rectWidth" value="${width}" class="border border-gray-300 rounded py-1 px-2 w-20">
+                </div>
+                <div class="flex gap-2">
+                    <label>Height:</label>
+                    <input type="number" id="rectHeight" value="${height}" class="border border-gray-300 rounded py-1 px-2 w-20">
+                </div>
+            `;
+        }
+
+        function drawTriangle(ctx) {
+            // Equilateral triangle
+            const side = 150;
+            const height = side * Math.sqrt(3) / 2;
+            const centerX = 175;
+            const centerY = 150;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - height/2);
+            ctx.lineTo(centerX - side/2, centerY + height/2);
+            ctx.lineTo(centerX + side/2, centerY + height/2);
+            ctx.closePath();
+            
+            ctx.fillStyle = '#FCA5A5';
+            ctx.fill();
+            ctx.strokeStyle = '#991B1B';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Label sides
+            ctx.fillStyle = '#000000';
+            ctx.font = '14px Arial';
+            ctx.fillText(`${side}px`, centerX, centerY + height/2 + 20);
+        }
+
+        function updateTriangleProperties() {
+            const side = 150;
+            document.getElementById('propertiesList').innerHTML = `
+                <ul class="list-disc pl-5">
+                    <li>All sides are equal (${side}px each)</li>
+                    <li>All angles are 60 degrees</li>
+                    <li>Has 3 lines of symmetry</li>
+                </ul>
+            `;
+            
+            document.getElementById('calculationInputs').innerHTML = `
+                <div class="flex gap-2 mb-2">
+                    <label>Side length:</label>
+                    <input type="number" id="triangleSide" value="${side}" class="border border-gray-300 rounded py-1 px-2 w-20">
+                </div>
+            `;
+        }
+
+        function drawCircle(ctx) {
+            const radius = 70;
+            const centerX = 175;
+            const centerY = 150;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#C4B5FD';
+            ctx.fill();
+            ctx.strokeStyle = '#5B21B6';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw radius
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + radius, centerY);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Label radius
+            ctx.fillStyle = '#000000';
+            ctx.font = '14px Arial';
+            ctx.fillText(`${radius}px`, centerX + radius/2, centerY + 20);
+        }
+
+        function updateCircleProperties() {
+            const radius = 70;
+            document.getElementById('propertiesList').innerHTML = `
+                <ul class="list-disc pl-5">
+                    <li>All points are equidistant from the center (radius = ${radius}px)</li>
+                    <li>Has infinite lines of symmetry</li>
+                    <li>Circumference = 2πr ≈ ${(2 * Math.PI * radius).toFixed(1)}px</li>
+                </ul>
+            `;
+            
+            document.getElementById('calculationInputs').innerHTML = `
+                <div class="flex gap-2 mb-2">
+                    <label>Radius:</label>
+                    <input type="number" id="circleRadius" value="${radius}" class="border border-gray-300 rounded py-1 px-2 w-20">
+                </div>
+            `;
+        }
+
+        function calculateGeometry() {
+            const shape = document.getElementById('shapeSelector').value;
+            let area, perimeter, html;
+            
+            switch(shape) {
+                case 'square':
+                    const side = 150;
+                    area = side * side;
+                    perimeter = 4 * side;
+                    html = `Area = ${area}px²<br>Perimeter = ${perimeter}px`;
+                    break;
+                case 'rectangle':
+                    const width = parseInt(document.getElementById('rectWidth').value) || 180;
+                    const height = parseInt(document.getElementById('rectHeight').value) || 100;
+                    area = width * height;
+                    perimeter = 2 * (width + height);
+                    html = `Area = ${area}px²<br>Perimeter = ${perimeter}px`;
+                    break;
+                case 'triangle':
+                    const triangleSide = parseInt(document.getElementById('triangleSide').value) || 150;
+                    area = (Math.sqrt(3)/4) * triangleSide * triangleSide;
+                    perimeter = 3 * triangleSide;
+                    html = `Area ≈ ${area.toFixed(1)}px²<br>Perimeter = ${perimeter}px`;
+                    break;
+                case 'circle':
+                    const radius = parseInt(document.getElementById('circleRadius').value) || 70;
+                    area = Math.PI * radius * radius;
+                    perimeter = 2 * Math.PI * radius;
+                    html = `Area ≈ ${area.toFixed(1)}px²<br>Circumference ≈ ${perimeter.toFixed(1)}px`;
+                    break;
+            }
+            
+            document.getElementById('geometryResults').innerHTML = html;
+        }
+
+        // Initialize geometry explorer
+        drawSelectedShape();
+    </script>
+</body>
+</html>
