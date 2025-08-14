@@ -135,26 +135,7 @@
             
 
             
-        function generateTable() {
-            const multiplier = parseInt(document.getElementById('multiplier').value);
-            const tableBody = document.getElementById('multiplicationTable');
-            tableBody.innerHTML = '';
-            
-            for (let i = 1; i <= 12; i++) {
-                const row = document.createElement('tr');
-                row.className = i % 2 === 0 ? 'bg-gray-50' : 'bg-white';
-                
-                row.innerHTML = `
-                    <td class="py-2 px-4 border text-center">${multiplier}</td>
-                    <td class="py-2 px-4 border text-center">×</td>
-                    <td class="py-2 px-4 border text-center">${i}</td>
-                    <td class="py-2 px-4 border text-center">=</td>
-                    <td class="py-2 px-4 border text-center">${multiplier * i}</td>
-                `;
-                
-                tableBody.appendChild(row);
-            }
-        }
+
 
         // Initialize multiplication table
         generateTable();
@@ -617,4 +598,5 @@
     </script>
 </body>
 </html>
+
 
