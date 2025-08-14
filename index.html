@@ -1,105 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Turtle Colorful Pattern</title>
-    <style>
-        body { margin: 0; overflow: hidden; background: black; }
-        canvas { display: block; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Colorful Spiral Pattern</title>
+<style>
+  body {
+    margin: 0;
+    background: black;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+    background: black;
+  }
+</style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <script>
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
-        
-        // Set canvas to full window size
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // Center of the canvas
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        
-        // Turtle-like drawing functions
-        let x = centerX;
-        let y = centerY;
-        let angle = 0;
-        let penDown = true;
-        
-        function move(distance) {
-            const rad = angle * Math.PI / 180;
-            const newX = x + distance * Math.cos(rad);
-            const newY = y + distance * Math.sin(rad);
-            if (penDown) {
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(newX, newY);
-                ctx.stroke();
-            }
-            x = newX;
-            y = newY;
-        }
-        
-        function circle(radius, extent) {
-            const startAngle = angle - 90;
-            const endAngle = startAngle + extent;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, startAngle * Math.PI / 180, endAngle * Math.PI / 180, extent < 0);
-            ctx.stroke();
-            // Update turtle position (approximation)
-            const rad = angle * Math.PI / 180;
-            x += radius * (Math.cos(endAngle * Math.PI / 180) - Math.cos(startAngle * Math.PI / 180));
-            y += radius * (Math.sin(endAngle * Math.PI / 180) - Math.sin(startAngle * Math.PI / 180));
-            angle += extent;
-        }
-        
-        function right(deg) { angle -= deg; }
-        function left(deg) { angle += deg; }
-        
-        // HSV to RGB conversion
-        function hsvToRgb(h, s, v) {
-            let r, g, b;
-            const i = Math.floor(h * 6);
-            const f = h * 6 - i;
-            const p = v * (1 - s);
-            const q = v * (1 - f * s);
-            const t = v * (1 - (1 - f) * s);
-            
-            switch (i % 6) {
-                case 0: r = v; g = t; b = p; break;
-                case 1: r = q; g = v; b = p; break;
-                case 2: r = p; g = v; b = t; break;
-                case 3: r = p; g = q; b = v; break;
-                case 4: r = t; g = p; b = v; break;
-                case 5: r = v; g = p; b = q; break;
-            }
-            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-        }
-        
-        // Draw the pattern
-        function draw() {
-            ctx.lineWidth = 2;
-            let h = 0;
-            
-            for (let i = 0; i < 16; i++) {
-                for (let j = 0; j < 18; j++) {
-                    const [r, g, b] = hsvToRgb(h, 1, 1);
-                    ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
-                    h += 0.005;
-                    
-                    right(90);
-                    circle(150 - j * 6, 90);
-                    left(90);
-                    circle(150 - j * 6, 90);
-                    right(180);
-                }
-                circle(40, 24);
-            }
-        }
-        
-        // Start drawing
-        draw();
-    </script>
+<canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Center of the canvas
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
+
+let h = 0;
+
+const totalOuterLoops = 16;
+const innerLoops = 18;
+
+for (let i = 0; i < totalOuterLoops; i++) {
+  for (let j = 0; j < innerLoops; j++) {
+    // Convert HSV to RGB
+    const hue = h * 360;
+    ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+    h += 0.005;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(Math.PI / 2); // 90 degrees in radians
+
+    const radius = 150 - j * 6;
+
+    // Draw first arc
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.rotate(Math.PI); // 180 degrees
+
+    // Draw second arc
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+  // Draw a small circle at the end
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(Math.PI / 12 * 2); // 24 degrees in radians
+  ctx.beginPath();
+  ctx.arc(0, 0, 40, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+</script>
 </body>
 </html>
