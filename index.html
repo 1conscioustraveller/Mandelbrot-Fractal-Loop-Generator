@@ -2,34 +2,104 @@
 <html>
 <head>
     <title>Turtle Colorful Pattern</title>
-    <script src="https://cdn.jsdelivr.net/npm/brython@3.10/brython.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/brython@3.10/brython_stdlib.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; }
+        canvas { display: block; }
+    </style>
 </head>
-<body onload="brython()">
-    <canvas id="turtlecanvas" width="800" height="800"></canvas>
-    <script type="text/python">
-from browser import document, window
-import colorsys
-import math
-
-# Set up Turtle-like environment using Brython
-turtle = window.Turtle.new(document["turtlecanvas"])
-turtle.speed(0)
-turtle.bgcolor("black")
-h = 0
-
-for i in range(16):
-    for j in range(18):
-        # Convert HSV to RGB (colorsys returns 0-1, we need 0-255)
-        r, g, b = colorsys.hsv_to_rgb(h, 1, 1)
-        turtle.color(f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})")
-        h += 0.005
-        turtle.right(90)
-        turtle.circle(150 - j * 6, 90)
-        turtle.left(90)
-        turtle.circle(150 - j * 6, 90)
-        turtle.right(180)
-    turtle.circle(40, 24)
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Set canvas to full window size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Center of the canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // Turtle-like drawing functions
+        let x = centerX;
+        let y = centerY;
+        let angle = 0;
+        let penDown = true;
+        
+        function move(distance) {
+            const rad = angle * Math.PI / 180;
+            const newX = x + distance * Math.cos(rad);
+            const newY = y + distance * Math.sin(rad);
+            if (penDown) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(newX, newY);
+                ctx.stroke();
+            }
+            x = newX;
+            y = newY;
+        }
+        
+        function circle(radius, extent) {
+            const startAngle = angle - 90;
+            const endAngle = startAngle + extent;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, startAngle * Math.PI / 180, endAngle * Math.PI / 180, extent < 0);
+            ctx.stroke();
+            // Update turtle position (approximation)
+            const rad = angle * Math.PI / 180;
+            x += radius * (Math.cos(endAngle * Math.PI / 180) - Math.cos(startAngle * Math.PI / 180));
+            y += radius * (Math.sin(endAngle * Math.PI / 180) - Math.sin(startAngle * Math.PI / 180));
+            angle += extent;
+        }
+        
+        function right(deg) { angle -= deg; }
+        function left(deg) { angle += deg; }
+        
+        // HSV to RGB conversion
+        function hsvToRgb(h, s, v) {
+            let r, g, b;
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = v * (1 - s);
+            const q = v * (1 - f * s);
+            const t = v * (1 - (1 - f) * s);
+            
+            switch (i % 6) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+        
+        // Draw the pattern
+        function draw() {
+            ctx.lineWidth = 2;
+            let h = 0;
+            
+            for (let i = 0; i < 16; i++) {
+                for (let j = 0; j < 18; j++) {
+                    const [r, g, b] = hsvToRgb(h, 1, 1);
+                    ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+                    h += 0.005;
+                    
+                    right(90);
+                    circle(150 - j * 6, 90);
+                    left(90);
+                    circle(150 - j * 6, 90);
+                    right(180);
+                }
+                circle(40, 24);
+            }
+        }
+        
+        // Start drawing
+        draw();
     </script>
 </body>
 </html>
