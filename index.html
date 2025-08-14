@@ -1,295 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mandelbrot Explorer</title>
+<style>
+  body {
+    background: #111;
+    color: white;
+    font-family: sans-serif;
+    text-align: center;
+    margin: 0;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+    background: black;
+  }
+</style>
+</head>
+<body>
+
+<h1>Mandelbrot Explorer</h1>
+<canvas id="mandelbrot"></canvas>
+
 <script>
-    // Load settings from localStorage
-    function loadSettings() {
-        const settings = JSON.parse(localStorage.getItem('mandelbrotSettings')) || {};
-        document.getElementById('colorScheme').value = settings.colorScheme || 'magma';
-        document.getElementById('iterations').value = settings.iterations || 100;
-        document.getElementById('zoomSpeed').value = settings.zoomSpeed || 0.9;
-        document.getElementById('centerX').value = settings.centerX || -0.75;
-        document.getElementById('centerY').value = settings.centerY || 0;
-        document.getElementById('frames').value = settings.frames || 50;
-        updateSliderValues();
+// Color palettes with integer RGB values
+const colorPalettes = {
+  magma: (t) => {
+    const r = Math.round(Math.min(255, 250 + Math.sin(t * 10) * 5));
+    const g = Math.round(Math.min(255, 100 + Math.sin(t * 15) * 30));
+    const b = Math.round(Math.min(255, 120 + Math.sin(t * 20) * 40));
+    return `rgb(${r},${g},${b})`;
+  },
+  plasma: (t) => {
+    const r = Math.round(255 * Math.abs(Math.sin(t * Math.PI)));
+    const g = Math.round(255 * Math.abs(Math.sin(t * Math.PI + 2)));
+    const b = Math.round(255 * Math.abs(Math.sin(t * Math.PI + 4)));
+    return `rgb(${r},${g},${b})`;
+  },
+  inferno: (t) => {
+    const r = Math.round(255 * t);
+    const g = Math.round(255 * t * t);
+    const b = Math.round(255 * t * t * t);
+    return `rgb(${r},${g},${b})`;
+  },
+  viridis: (t) => {
+    const r = Math.round(255 * t);
+    const g = Math.round(255 * (1 - t));
+    const b = Math.round(255 * Math.sqrt(t));
+    return `rgb(${r},${g},${b})`;
+  },
+  rainbow: (t) => {
+    const r = Math.round(127 * Math.sin(t * 6.28) + 128);
+    const g = Math.round(127 * Math.sin(t * 6.28 + 2) + 128);
+    const b = Math.round(127 * Math.sin(t * 6.28 + 4) + 128);
+    return `rgb(${r},${g},${b})`;
+  },
+  electric: (t) => {
+    const r = Math.floor(Math.abs(Math.sin(t * 0.05)) * 255);
+    const g = Math.floor(Math.abs(Math.sin(t * 0.05 + Math.PI / 3)) * 255);
+    const b = Math.floor(Math.abs(Math.sin(t * 0.05 + (2 * Math.PI) / 3)) * 255);
+    return `rgb(${r},${g},${b})`;
+  }
+};
+
+const canvas = document.getElementById('mandelbrot');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let paletteName = 'electric'; // Change palette here
+const maxIter = 500;
+const zoom = 200;
+const panX = 2;
+const panY = 1.5;
+
+function drawMandelbrot() {
+  const img = ctx.createImageData(canvas.width, canvas.height);
+  const data = img.data;
+  const getColor = colorPalettes[paletteName];
+
+  for (let px = 0; px < canvas.width; px++) {
+    for (let py = 0; py < canvas.height; py++) {
+      let x0 = (px - canvas.width / 2) / zoom - (panX - 2);
+      let y0 = (py - canvas.height / 2) / zoom - (panY - 1.5);
+      let x = 0, y = 0, iteration = 0;
+
+      while (x * x + y * y <= 4 && iteration < maxIter) {
+        let xTemp = x * x - y * y + x0;
+        y = 2 * x * y + y0;
+        x = xTemp;
+        iteration++;
+      }
+
+      const t = iteration / maxIter;
+      const color = getColor(t);
+      const match = color.match(/rgb\((\d+),(\d+),(\d+)\)/);
+
+      const idx = 4 * (py * canvas.width + px);
+      if (match) {
+        data[idx] = parseInt(match[1], 10);
+        data[idx + 1] = parseInt(match[2], 10);
+        data[idx + 2] = parseInt(match[3], 10);
+        data[idx + 3] = 255;
+      }
     }
+  }
+  ctx.putImageData(img, 0, 0);
+}
 
-    // Save settings to localStorage
-    function saveSettings() {
-        const settings = {
-            colorScheme: document.getElementById('colorScheme').value,
-            iterations: parseInt(document.getElementById('iterations').value),
-            zoomSpeed: parseFloat(document.getElementById('zoomSpeed').value),
-            centerX: parseFloat(document.getElementById('centerX').value),
-            centerY: parseFloat(document.getElementById('centerY').value),
-            frames: parseInt(document.getElementById('frames').value)
-        };
-        localStorage.setItem('mandelbrotSettings', JSON.stringify(settings));
-        document.getElementById('status').textContent = 'Settings saved!';
-        setTimeout(() => document.getElementById('status').textContent = '', 2000);
-    }
-
-    // Update slider value displays
-    function updateSliderValues() {
-        document.getElementById('iterationsValue').textContent = document.getElementById('iterations').value;
-        document.getElementById('zoomSpeedValue').textContent = document.getElementById('zoomSpeed').value;
-        document.getElementById('centerXValue').textContent = document.getElementById('centerX').value;
-        document.getElementById('centerYValue').textContent = document.getElementById('centerY').value;
-        document.getElementById('framesValue').textContent = document.getElementById('frames').value;
-    }
-
-    // Initialize canvas and context
-    const canvas = document.getElementById('fractalCanvas');
-    const ctx = canvas.getContext('2d');
-
-    function resizeCanvas() {
-        const container = canvas.parentElement;
-        canvas.width = container.clientWidth - 40;
-        canvas.height = Math.min(canvas.width * 0.75, window.innerHeight - 300);
-    }
-
-    window.addEventListener('resize', () => {
-        resizeCanvas();
-        drawMandelbrot();
-    });
-
-    // Color palettes now return [r, g, b] integers
-    const colorPalettes = {
-        magma: (t) => [
-            Math.round(Math.min(255, 250 + Math.sin(t * 10) * 5)),
-            Math.round(Math.min(255, 100 + Math.sin(t * 15) * 30)),
-            Math.round(Math.min(255, 120 + Math.sin(t * 20) * 40))
-        ],
-        plasma: (t) => [
-            Math.round(Math.min(255, 200 + Math.sin(t * 15) * 55)),
-            Math.round(Math.min(255, 50 + Math.sin(t * 10) * 50)),
-            Math.round(Math.min(255, 150 + Math.sin(t * 20) * 105))
-        ],
-        inferno: (t) => [
-            Math.round(Math.min(255, 220 + Math.sin(t * 12) * 35)),
-            Math.round(Math.min(255, 100 + Math.sin(t * 18) * 50)),
-            Math.round(Math.min(255, 30 + Math.sin(t * 25) * 30))
-        ],
-        viridis: (t) => [
-            Math.round(Math.min(255, 50 + Math.sin(t * 15) * 50)),
-            Math.round(Math.min(255, 150 + Math.sin(t * 20) * 50)),
-            Math.round(Math.min(255, 180 + Math.sin(t * 25) * 50))
-        ],
-        rainbow: (t) => [
-            Math.floor(Math.sin(t * 0.1) * 127 + 128),
-            Math.floor(Math.sin(t * 0.1 + 2) * 127 + 128),
-            Math.floor(Math.sin(t * 0.1 + 4) * 127 + 128)
-        ],
-        electric: (t) => [
-            Math.floor(Math.abs(Math.sin(t * 0.05)) * 255),
-            Math.floor(Math.abs(Math.sin(t * 0.05 + Math.PI/3)) * 255),
-            Math.floor(Math.abs(Math.sin(t * 0.05 + 2*Math.PI/3)) * 255)
-        ]
-    };
-
-    // Mandelbrot calculation
-    function mandelbrot(c, maxIter) {
-        let z = { x: 0, y: 0 };
-        let iter = 0;
-        while (z.x * z.x + z.y * z.y <= 4 && iter < maxIter) {
-            const tmp = z.x * z.x - z.y * z.y + c.x;
-            z.y = 2 * z.x * z.y + c.y;
-            z.x = tmp;
-            iter++;
-        }
-        return iter;
-    }
-
-    // Draw Mandelbrot set
-    function drawMandelbrot(xmin = -2.5, xmax = 1, ymin = -1.1, ymax = 1.1, maxIter = 100) {
-        const width = canvas.width;
-        const height = canvas.height;
-        const imageData = ctx.createImageData(width, height);
-        const data = imageData.data;
-
-        const colorScheme = document.getElementById('colorScheme').value;
-        const getColor = colorPalettes[colorScheme] || colorPalettes.magma;
-
-        for (let x = 0; x < width; x++) {
-            for (let y = 0; y < height; y++) {
-                const cx = xmin + (xmax - xmin) * x / width;
-                const cy = ymin + (ymax - ymin) * y / height;
-
-                const iter = mandelbrot({ x: cx, y: cy }, maxIter);
-                const idx = (y * width + x) * 4;
-
-                if (iter === maxIter) {
-                    data[idx] = 0;
-                    data[idx + 1] = 0;
-                    data[idx + 2] = 0;
-                } else {
-                    const t = iter / maxIter;
-                    const [r, g, b] = getColor(t);
-                    data[idx] = r;
-                    data[idx + 1] = g;
-                    data[idx + 2] = b;
-                }
-                data[idx + 3] = 255;
-            }
-        }
-        ctx.putImageData(imageData, 0, 0);
-    }
-
-    // Animation variables
-    let animationId = null;
-    let currentFrame = 0;
-    let frames = [];
-
-    function previewAnimation() {
-        const maxIter = parseInt(document.getElementById('iterations').value);
-        const zoomSpeed = parseFloat(document.getElementById('zoomSpeed').value);
-        const centerX = parseFloat(document.getElementById('centerX').value);
-        const centerY = parseFloat(document.getElementById('centerY').value);
-        const totalFrames = parseInt(document.getElementById('frames').value);
-
-        let xmin = -2.5;
-        let xmax = 1;
-        let ymin = -1.1;
-        let ymax = 1.1;
-
-        const width = xmax - xmin;
-        const height = ymax - ymin;
-        xmin = centerX - width/2;
-        xmax = centerX + width/2;
-        ymin = centerY - height/2;
-        ymax = centerY + height/2;
-
-        currentFrame = 0;
-        frames = [];
-
-        function animate() {
-            if (currentFrame >= totalFrames) currentFrame = 0;
-            const zoom = Math.pow(zoomSpeed, currentFrame);
-            const newWidth = width * zoom;
-            const newHeight = height * zoom;
-            const newXmin = centerX - newWidth/2;
-            const newXmax = centerX + newWidth/2;
-            const newYmin = centerY - newHeight/2;
-            const newYmax = centerY + newHeight/2;
-
-            drawMandelbrot(newXmin, newXmax, newYmin, newYmax, maxIter);
-            currentFrame++;
-            animationId = requestAnimationFrame(animate);
-        }
-
-        if (animationId) cancelAnimationFrame(animationId);
-        animate();
-    }
-
-    async function generateFramesForDownload() {
-        const maxIter = parseInt(document.getElementById('iterations').value);
-        const zoomSpeed = parseFloat(document.getElementById('zoomSpeed').value);
-        const centerX = parseFloat(document.getElementById('centerX').value);
-        const centerY = parseFloat(document.getElementById('centerY').value);
-        const totalFrames = 50;
-
-        let xmin = -2.5;
-        let xmax = 1;
-        let ymin = -1.1;
-        let ymax = 1.1;
-
-        const width = xmax - xmin;
-        const height = ymax - ymin;
-        xmin = centerX - width/2;
-        xmax = centerX + width/2;
-        ymin = centerY - height/2;
-        ymax = centerY + height/2;
-
-        document.getElementById('status').textContent = 'Generating frames...';
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-
-        frames = [];
-
-        for (let i = 0; i < totalFrames; i++) {
-            const zoom = Math.pow(zoomSpeed, i);
-            const newWidth = width * zoom;
-            const newHeight = height * zoom;
-            const newXmin = centerX - newWidth/2;
-            const newXmax = centerX + newWidth/2;
-            const newYmin = centerY - newHeight/2;
-            const newYmax = centerY + newHeight/2;
-
-            drawOnCanvas(tempCtx, tempCanvas.width, tempCanvas.height, newXmin, newXmax, newYmin, newYmax, maxIter);
-            frames.push(tempCanvas.toDataURL('image/png'));
-            document.getElementById('status').textContent = `Generating frame ${i+1}/${totalFrames}...`;
-            await new Promise(resolve => setTimeout(resolve, 0));
-        }
-        document.getElementById('status').textContent = 'Frames generated. Creating video...';
-        await createVideo();
-    }
-
-    function drawOnCanvas(ctx, width, height, xmin, xmax, ymin, ymax, maxIter) {
-        const imageData = ctx.createImageData(width, height);
-        const data = imageData.data;
-
-        const colorScheme = document.getElementById('colorScheme').value;
-        const getColor = colorPalettes[colorScheme] || colorPalettes.magma;
-
-        for (let x = 0; x < width; x++) {
-            for (let y = 0; y < height; y++) {
-                const cx = xmin + (xmax - xmin) * x / width;
-                const cy = ymin + (ymax - ymin) * y / height;
-
-                const iter = mandelbrot({ x: cx, y: cy }, maxIter);
-                const idx = (y * width + x) * 4;
-
-                if (iter === maxIter) {
-                    data[idx] = 0;
-                    data[idx + 1] = 0;
-                    data[idx + 2] = 0;
-                } else {
-                    const t = iter / maxIter;
-                    const [r, g, b] = getColor(t);
-                    data[idx] = r;
-                    data[idx + 1] = g;
-                    data[idx + 2] = b;
-                }
-                data[idx + 3] = 255;
-            }
-        }
-        ctx.putImageData(imageData, 0, 0);
-    }
-
-    async function createVideo() {
-        try {
-            document.getElementById('status').textContent = 'Preparing video (this may take a minute)...';
-            const link = document.createElement('a');
-            link.href = frames[0];
-            link.download = 'mandelbrot-frame.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            document.getElementById('status').textContent = 'Video generation would complete here. In this demo, only the first frame is downloaded.';
-        } catch (error) {
-            console.error('Error creating video:', error);
-            document.getElementById('status').textContent = 'Error creating video. See console for details.';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        resizeCanvas();
-        loadSettings();
-        drawMandelbrot();
-
-        document.querySelectorAll('input[type="range"]').forEach(slider => {
-            slider.addEventListener('input', updateSliderValues);
-        });
-        document.getElementById('colorScheme').addEventListener('change', () => drawMandelbrot());
-        document.getElementById('iterations').addEventListener('change', () => drawMandelbrot());
-
-        document.getElementById('previewBtn').addEventListener('click', previewAnimation);
-        document.getElementById('downloadBtn').addEventListener('click', generateFramesForDownload);
-        document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
-        document.getElementById('resetSettingsBtn').addEventListener('click', () => {
-            localStorage.removeItem('mandelbrotSettings');
-            loadSettings();
-            drawMandelbrot();
-        });
-    });
+drawMandelbrot();
 </script>
+</body>
+</html>
