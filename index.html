@@ -1,104 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Six-Petal Flower</title>
-<style>
-  body {
-    margin: 0;
-    background: black;
-    overflow: hidden;
-  }
-  canvas {
-    display: block;
-    margin: auto;
-    background: black;
-  }
-</style>
+    <title>Turtle Pattern in Canvas</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            border: 1px solid #333;
+        }
+    </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-<script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-
-// Set canvas to window size
-canvas.width = Math.min(window.innerWidth, window.innerHeight);
-canvas.height = Math.min(window.innerWidth, window.innerHeight);
-
-// Center of the canvas
-const cx = canvas.width / 2;
-const cy = canvas.height / 2;
-
-let h = 0; // Hue value
-
-const petals = 6; // Number of petals
-const layers = 12; // Number of layers for depth
-
-// Draw the flower
-function drawFlower() {
-  for (let layer = 0; layer < layers; layer++) {
-    const layerScale = 1 - (layer / layers * 0.7); // Scale decreases with layers
-    
-    for (let petal = 0; petal < petals; petal++) {
-      // Calculate angle for this petal
-      const angle = (petal / petals) * Math.PI * 2;
-      
-      // Set color with changing hue
-      ctx.strokeStyle = `hsl(${h * 360}, 100%, ${70 - layer * 3}%)`;
-      ctx.lineWidth = 2 + layer * 0.5;
-      h += 0.01;
-      
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(angle);
-      
-      // Draw the petal (two arcs)
-      const radius = 100 * layerScale;
-      
-      // First arc of petal
-      ctx.beginPath();
-      ctx.arc(0, 50 * layerScale, radius * 0.6, Math.PI * 0.2, Math.PI * 0.8);
-      ctx.stroke();
-      
-      // Second arc of petal (mirrored)
-      ctx.beginPath();
-      ctx.arc(0, -50 * layerScale, radius * 0.6, -Math.PI * 0.8, -Math.PI * 0.2);
-      ctx.stroke();
-      
-      ctx.restore();
-    }
-  }
-  
-  // Draw the flower center
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.fillStyle = `hsl(${h * 360}, 100%, 50%)`;
-  ctx.beginPath();
-  ctx.arc(0, 0, 20, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-// Animation loop
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawFlower();
-  h += 0.002; // Slowly change hue
-  requestAnimationFrame(animate);
-}
-
-// Start animation
-animate();
-
-// Handle window resize
-window.addEventListener('resize', function() {
-  canvas.width = Math.min(window.innerWidth, window.innerHeight);
-  canvas.height = Math.min(window.innerWidth, window.innerHeight);
-  cx = canvas.width / 2;
-  cy = canvas.height / 2;
-});
-</script>
+    <canvas id="turtleCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('turtleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+        canvas.width = size;
+        canvas.height = size;
+        
+        // Center of canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // Turtle state
+        let x = centerX;
+        let y = centerY;
+        let angle = 0;
+        let h = 0; // Hue value
+        
+        // Convert HSV to RGB (returns CSS color string)
+        function hsvToRgb(h, s, v) {
+            let r, g, b;
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = v * (1 - s);
+            const q = v * (1 - f * s);
+            const t = v * (1 - (1 - f) * s);
+            
+            switch (i % 6) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+            }
+            return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
+        }
+        
+        // Turtle movement functions
+        function forward(distance) {
+            const rad = angle * Math.PI / 180;
+            const newX = x + distance * Math.cos(rad);
+            const newY = y + distance * Math.sin(rad);
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(newX, newY);
+            ctx.stroke();
+            
+            x = newX;
+            y = newY;
+        }
+        
+        function right(degrees) {
+            angle -= degrees;
+        }
+        
+        function left(degrees) {
+            angle += degrees;
+        }
+        
+        // Draw an arc (similar to Turtle's circle)
+        function circle(radius, extent) {
+            const startAngle = (angle - 90) * Math.PI / 180;
+            const endAngle = startAngle + extent * Math.PI / 180;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, radius, startAngle, endAngle, extent < 0);
+            ctx.stroke();
+            
+            // Update turtle position to match Turtle's behavior
+            const rad = angle * Math.PI / 180;
+            x += radius * (Math.cos(endAngle) - Math.cos(startAngle));
+            y += radius * (Math.sin(endAngle) - Math.sin(startAngle));
+            angle += extent;
+        }
+        
+        // Main drawing function
+        function draw() {
+            ctx.lineWidth = 1.5;
+            
+            for (let i = 0; i < 16; i++) {
+                for (let j = 0; j < 18; j++) {
+                    ctx.strokeStyle = hsvToRgb(h, 1, 1);
+                    h += 0.005;
+                    
+                    right(90);
+                    circle(150 - j * 6, 90);
+                    left(90);
+                    circle(150 - j * 6, 90);
+                    right(180);
+                }
+                circle(40, 24);
+            }
+        }
+        
+        // Start drawing
+        draw();
+    </script>
 </body>
 </html>
