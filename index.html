@@ -1,286 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ohm's Law Simulator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .glow {
-            text-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
-        }
-        .circuit-element {
-            transition: all 0.3s ease;
-        }
-        .slider-thumb::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .slider-thumb::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-        }
-        #voltageSlider::-webkit-slider-thumb {
-            background: #ef4444;
-            box-shadow: 0 0 5px #ef4444;
-        }
-        #currentSlider::-webkit-slider-thumb {
-            background: #3b82f6;
-            box-shadow: 0 0 5px #3b82f6;
-        }
-        #resistanceSlider::-webkit-slider-thumb {
-            background: #10b981;
-            box-shadow: 0 0 5px #10b981;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ohm's Law Calculator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Optional: Custom styles for a futuristic glow effect */
+    .neon-text {
+      text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+    }
+    .neon-border {
+      box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff inset;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl font-bold mb-2 glow text-blue-400">Ohm's Law Simulator</h1>
-            <p class="text-xl text-gray-300">V = I × R</p>
-        </header>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center font-mono">
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Circuit Visualization -->
-            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
-                <h2 class="text-2xl font-semibold mb-4 text-center text-blue-300">Circuit Diagram</h2>
-                <div class="relative h-64">
-                    <!-- Battery -->
-                    <div id="battery" class="circuit-element absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-20 bg-red-500 border-2 border-red-600 rounded flex items-center justify-center">
-                        <span id="voltageValue" class="font-bold text-white">10V</span>
-                    </div>
-                    
-                    <!-- Wire from battery to resistor -->
-                    <div class="absolute left-16 top-1/2 w-24 h-1 bg-yellow-400 transform -translate-y-1/2"></div>
-                    
-                    <!-- Resistor -->
-                    <div id="resistor" class="circuit-element absolute left-40 top-1/2 transform -translate-y-1/2 w-16 h-12 bg-green-500 border-2 border-green-600 rounded flex items-center justify-center">
-                        <span id="resistanceValue" class="font-bold text-white">5Ω</span>
-                    </div>
-                    
-                    <!-- Wire from resistor to ammeter -->
-                    <div class="absolute left-56 top-1/2 w-16 h-1 bg-yellow-400 transform -translate-y-1/2"></div>
-                    
-                    <!-- Ammeter -->
-                    <div id="ammeter" class="circuit-element absolute left-72 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-blue-500 border-2 border-blue-600 rounded-full flex items-center justify-center">
-                        <span id="currentValue" class="font-bold text-white">2A</span>
-                    </div>
-                    
-                    <!-- Wire back to battery -->
-                    <div class="absolute left-84 top-1/2 w-4 h-1 bg-yellow-400 transform -translate-y-1/2"></div>
-                    <div class="absolute left-88 top-1/2 h-12 w-1 bg-yellow-400 transform -translate-y-1/2"></div>
-                    <div class="absolute left-88 bottom-1/2 h-12 w-1 bg-yellow-400 transform translate-y-1/2"></div>
-                    <div class="absolute left-16 bottom-1/2 w-72 h-1 bg-yellow-400 transform translate-y-1/2"></div>
-                    <div class="absolute left-16 bottom-1/2 h-16 w-1 bg-yellow-400 transform translate-y-1/2"></div>
-                    <div class="absolute left-4 bottom-1/2 w-12 h-1 bg-yellow-400 transform translate-y-1/2"></div>
-                </div>
-                
-                <div class="mt-8 grid grid-cols-3 gap-4 text-center">
-                    <div>
-                        <p class="text-red-400 font-medium">Voltage (V)</p>
-                        <input type="range" id="voltageSlider" min="0.1" max="20" step="0.1" value="10" class="slider-thumb w-full mt-2">
-                    </div>
-                    <div>
-                        <p class="text-blue-400 font-medium">Current (I)</p>
-                        <input type="range" id="currentSlider" min="0.1" max="10" step="0.1" value="2" class="slider-thumb w-full mt-2">
-                    </div>
-                    <div>
-                        <p class="text-green-400 font-medium">Resistance (R)</p>
-                        <input type="range" id="resistanceSlider" min="0.1" max="20" step="0.1" value="5" class="slider-thumb w-full mt-2">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Graph and Explanation -->
-            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
-                <h2 class="text-2xl font-semibold mb-4 text-center text-blue-300">Ohm's Law Relationship</h2>
-                <div class="h-64">
-                    <canvas id="ohmsLawChart"></canvas>
-                </div>
-                
-                <div class="mt-6 bg-gray-700 p-4 rounded-lg">
-                    <h3 class="text-lg font-medium mb-2 text-blue-300">Ohm's Law Explained</h3>
-                    <p class="text-gray-300 mb-2">V = I × R</p>
-                    <ul class="text-gray-300 space-y-1">
-                        <li><span class="text-red-400">V</span> = Voltage (Volts)</li>
-                        <li><span class="text-blue-400">I</span> = Current (Amperes)</li>
-                        <li><span class="text-green-400">R</span> = Resistance (Ohms)</li>
-                    </ul>
-                    <p class="text-gray-300 mt-3">Adjust any slider to see how it affects the other values in the circuit.</p>
-                </div>
-            </div>
-        </div>
+  <div class="max-w-2xl w-full p-8 rounded-xl bg-gray-800 bg-opacity-70 backdrop-blur-lg shadow-lg border border-gray-700">
+    <h1 class="text-4xl font-bold mb-6 neon-text text-center">Ohm's Law Calculator</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div>
+        <label class="block mb-2 font-semibold" for="value1">Value 1</label>
+        <input type="number" id="value1" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Enter first value" />
+      </div>
+      <div>
+        <label class="block mb-2 font-semibold" for="value2">Value 2</label>
+        <input type="number" id="value2" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Enter second value" />
+      </div>
     </div>
 
-    <script>
-        // DOM Elements
-        const voltageSlider = document.getElementById('voltageSlider');
-        const currentSlider = document.getElementById('currentSlider');
-        const resistanceSlider = document.getElementById('resistanceSlider');
-        const voltageValue = document.getElementById('voltageValue');
-        const currentValue = document.getElementById('currentValue');
-        const resistanceValue = document.getElementById('resistanceValue');
-        
-        // Chart setup
-        const ctx = document.getElementById('ohmsLawChart').getContext('2d');
-        let ohmsLawChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [{
-                    label: 'V = I × R',
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: true
-                }, {
-                    label: 'Current Operating Point',
-                    borderColor: '#ef4444',
-                    backgroundColor: '#ef4444',
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    data: []
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Current (A)',
-                            color: '#9ca3af'
-                        },
-                        grid: {
-                            color: 'rgba(156, 163, 175, 0.1)'
-                        },
-                        ticks: {
-                            color: '#9ca3af'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Voltage (V)',
-                            color: '#9ca3af'
-                        },
-                        grid: {
-                            color: 'rgba(156, 163, 175, 0.1)'
-                        },
-                        ticks: {
-                            color: '#9ca3af'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#9ca3af'
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label === 'Current Operating Point') {
-                                    const voltage = parseFloat(voltageSlider.value);
-                                    const current = parseFloat(currentSlider.value);
-                                    const resistance = parseFloat(resistanceSlider.value);
-                                    return `${label}: V=${voltage}V, I=${current}A, R=${resistance}Ω`;
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
+    <div class="mb-4">
+      <p class="mb-2 font-semibold">Select value to calculate:</p>
+      <div class="flex space-x-4 justify-center">
+        <label class="inline-flex items-center">
+          <input type="radio" class="form-radio text-cyan-400" name="calculate" value="voltage" checked>
+          <span class="ml-2">Voltage (V)</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="radio" class="form-radio text-cyan-400" name="calculate" value="current">
+          <span class="ml-2">Current (I)</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="radio" class="form-radio text-cyan-400" name="calculate" value="resistance">
+          <span class="ml-2">Resistance (R)</span>
+        </label>
+      </div>
+    </div>
 
-        // Initial values
-        let voltage = 10;
-        let current = 2;
-        let resistance = 5;
-        let activeSlider = null;
+    <button id="calculateBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-3 px-6 rounded-lg transition duration-300">Calculate</button>
 
-        // Update chart function
-        function updateChart() {
-            const resistance = parseFloat(resistanceSlider.value);
-            const currents = Array.from({length: 100}, (_, i) => i * 0.1);
-            const voltages = currents.map(i => i * resistance);
-            
-            ohmsLawChart.data.datasets[0].data = currents.map((val, i) => ({x: val, y: voltages[i]}));
-            ohmsLawChart.data.datasets[1].data = [{
-                x: parseFloat(currentSlider.value),
-                y: parseFloat(voltageSlider.value)
-            }];
-            
-            ohmsLawChart.update();
+    <div class="mt-6 p-4 rounded-lg bg-gray-700 border border-gray-600 text-center">
+      <h2 class="text-2xl font-bold mb-2 neon-text">Result:</h2>
+      <p id="result" class="text-xl">Enter values and select what to calculate.</p>
+    </div>
+  </div>
+
+  <script>
+    const value1Input = document.getElementById('value1');
+    const value2Input = document.getElementById('value2');
+    const resultPara = document.getElementById('result');
+    const calculateBtn = document.getElementById('calculateBtn');
+
+    function getSelectedCalculation() {
+      const radios = document.getElementsByName('calculate');
+      for (const radio of radios) {
+        if (radio.checked) {
+          return radio.value;
         }
+      }
+      return null;
+    }
 
-        // Update circuit visualization
-        function updateCircuitVisuals() {
-            voltageValue.textContent = `${voltage.toFixed(1)}V`;
-            currentValue.textContent = `${current.toFixed(1)}A`;
-            resistanceValue.textContent = `${resistance.toFixed(1)}Ω`;
-            
-            // Animate elements
-            document.getElementById('battery').style.boxShadow = `0 0 15px rgba(239, 68, 68, ${voltage/20})`;
-            document.getElementById('ammeter').style.boxShadow = `0 0 15px rgba(59, 130, 246, ${current/10})`;
-            document.getElementById('resistor').style.boxShadow = `0 0 15px rgba(16, 185, 129, ${resistance/20})`;
-        }
+    function parseInput(id) {
+      const val = document.getElementById(id).value;
+      return val !== '' ? parseFloat(val) : null;
+    }
 
-        // Slider event handlers
-        voltageSlider.addEventListener('input', function() {
-            if (activeSlider !== 'voltage') return;
-            
-            voltage = parseFloat(this.value);
+    function calculate() {
+      const val1 = parseInput('value1');
+      const val2 = parseInput('value2');
+      const toCalculate = getSelectedCalculation();
+
+      let voltage = null, current = null, resistance = null;
+
+      // Assign known values based on user input
+      switch (toCalculate) {
+        case 'voltage':
+          resistance = val1;
+          current = val2;
+          if (resistance !== null && current !== null) {
+            voltage = resistance * current;
+            resultPara.innerHTML = `
+              <span class="font-semibold">Voltage (V):</span> ${voltage.toFixed(2)} V<br>
+              <span class="font-semibold">Current (I):</span> ${current} A<br>
+              <span class="font-semibold">Resistance (R):</span> ${resistance} Ω
+            `;
+          } else {
+            resultPara.textContent = 'Please enter both Resistance and Current.';
+          }
+          break;
+        case 'current':
+          voltage = val1;
+          resistance = val2;
+          if (voltage !== null && resistance !== null) {
             current = voltage / resistance;
-            
-            currentSlider.value = current.toFixed(1);
-            updateCircuitVisuals();
-            updateChart();
-        });
+            resultPara.innerHTML = `
+              <span class="font-semibold">Voltage (V):</span> ${voltage} V<br>
+              <span class="font-semibold">Current (I):</span> ${current.toFixed(2)} A<br>
+              <span class="font-semibold">Resistance (R):</span> ${resistance} Ω
+            `;
+          } else {
+            resultPara.textContent = 'Please enter both Voltage and Resistance.';
+          }
+          break;
+        case 'resistance':
+          voltage = val1;
+          current = val2;
+          if (voltage !== null && current !== null) {
+            resistance = voltage / current;
+            resultPara.innerHTML = `
+              <span class="font-semibold">Voltage (V):</span> ${voltage} V<br>
+              <span class="font-semibold">Current (I):</span> ${current} A<br>
+              <span class="font-semibold">Resistance (R):</span> ${resistance.toFixed(2)} Ω
+            `;
+          } else {
+            resultPara.textContent = 'Please enter both Voltage and Current.';
+          }
+          break;
+        default:
+          resultPara.textContent = 'Please select a calculation.';
+      }
+    }
 
-        currentSlider.addEventListener('input', function() {
-            if (activeSlider !== 'current') return;
-            
-            current = parseFloat(this.value);
-            voltage = current * resistance;
-            
-            voltageSlider.value = voltage.toFixed(1);
-            updateCircuitVisuals();
-            updateChart();
-        });
+    document.getElementById('calculateBtn').addEventListener('click', calculate);
+  </script>
 
-        resistanceSlider.addEventListener('input', function() {
-            if (activeSlider !== 'resistance') return;
-            
-            resistance = parseFloat(this.value);
-            current = voltage / resistance;
-            
-            currentSlider.value = current.toFixed(1);
-            updateCircuitVisuals();
-            updateChart();
-        });
-
-        // Track which slider is being actively changed
-        voltageSlider.addEventListener('mousedown', () => activeSlider = 'voltage');
-        currentSlider.addEventListener('mousedown', () => activeSlider = 'current');
-        resistanceSlider.addEventListener('mousedown', () => activeSlider = 'resistance');
-        
-        voltageSlider.addEventListener('touchstart', () => activeSlider = 'voltage');
-        currentSlider.addEventListener('touchstart', () => activeSlider = 'current');
-        resistanceSlider.addEventListener('touchstart', () => activeSlider = 'resistance');
-
-        // Initialize
-        updateCircuitVisuals();
-        updateChart();
-    </script>
 </body>
 </html>
