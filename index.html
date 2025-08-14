@@ -3,57 +3,101 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Simple Animation with JavaScript</title>
+<title>Interactive Geometry: Drag Circle</title>
 <style>
   body { margin: 0; overflow: hidden; }
-  canvas { display: block; }
+  canvas { display: block; cursor: pointer; }
+  #info {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: rgba(255,255,255,0.8);
+    padding: 8px;
+    font-family: sans-serif;
+    border-radius: 4px;
+  }
 </style>
 </head>
 <body>
 <canvas id="myCanvas"></canvas>
+<div id="info">Click and drag to move the circle. Radius shows distance from center to edge.</div>
 
 <script>
   const canvas = document.getElementById('myCanvas');
   const ctx = canvas.getContext('2d');
 
-  // Resize canvas to fill the window
+  let circle = {
+    x: 200,
+    y: 200,
+    radius: 50,
+    isDragging: false,
+    offsetX: 0,
+    offsetY: 0
+  };
+
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    draw();
   }
   window.addEventListener('resize', resize);
   resize();
 
-  // Object properties
-  const circle = {
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    radius: 30,
-    dx: (Math.random() - 0.5) * 4,
-    dy: (Math.random() - 0.5) * 4
-  };
-
-  function animate() {
+  // Draw the circle with radius line
+  function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw circle
     ctx.beginPath();
     ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'blue';
+    ctx.fillStyle = 'lightgreen';
     ctx.fill();
+    ctx.strokeStyle = 'green';
+    ctx.stroke();
 
-    // Move circle
-    circle.x += circle.dx;
-    circle.y += circle.dy;
+    // Draw radius line from center to edge
+    ctx.beginPath();
+    ctx.moveTo(circle.x, circle.y);
+    ctx.lineTo(circle.x + circle.radius, circle.y);
+    ctx.strokeStyle = 'red';
+    ctx.stroke();
 
-    // Bounce off walls
-    if (circle.x + circle.radius > canvas.width || circle.x - circle.radius < 0) {
-      circle.dx *= -1;
+    // Draw radius length label
+    ctx.fillStyle = 'black';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`Radius: ${circle.radius.toFixed(1)}`, circle.x + circle.radius + 5, circle.y);
+  }
+
+  // Mouse events for dragging
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const dist = Math.hypot(mouseX - circle.x, mouseY - circle.y);
+    if (dist < circle.radius) {
+      circle.isDragging = true;
+      circle.offsetX = mouseX - circle.x;
+      circle.offsetY = mouseY - circle.y;
     }
-    if (circle.y + circle.radius > canvas.height || circle.y - circle.radius < 0) {
-      circle.dy *= -1;
-    }
+  });
 
+  canvas.addEventListener('mouseup', () => {
+    circle.isDragging = false;
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (circle.isDragging) {
+      const rect = canvas.getBoundingClientRect();
+      circle.x = e.clientX - rect.left - circle.offsetX;
+      circle.y = e.clientY - rect.top - circle.offsetY;
+    }
+  });
+
+  // Optional: Adjust radius based on dragging the edge
+  // For simplicity, here we keep the radius fixed, but you could extend this
+
+  // Animate (not strictly necessary here, but good for responsiveness)
+  function animate() {
+    draw();
     requestAnimationFrame(animate);
   }
 
